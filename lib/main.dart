@@ -191,9 +191,12 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
           onRequestPermissions: () => _lockService.requestRequiredPermissions(),
           onSyncQuestionsNow: (repo) =>
               _curriculumService.syncQuestionsFromGitHub(repo),
-          onSyncDeviceUsageNow: () => _reportService.syncDeviceUsageNow(
+          onSyncDeviceUsageNow: (repo, token) =>
+              _reportService.syncDeviceUsageNow(
             profile: _profile,
             deviceLockService: _lockService,
+            overrideRepo: repo,
+            overrideToken: token,
           ),
         ),
       ),

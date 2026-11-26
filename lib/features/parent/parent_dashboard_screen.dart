@@ -26,7 +26,7 @@ class ParentDashboardScreen extends StatefulWidget {
   final VoidCallback onSimulateTimeUp;
   final VoidCallback onRequestPermissions;
   final Future<int> Function(String repo) onSyncQuestionsNow;
-  final Future<bool> Function() onSyncDeviceUsageNow;
+  final Future<String> Function(String repo, String token) onSyncDeviceUsageNow;
 
   @override
   State<ParentDashboardScreen> createState() => _ParentDashboardScreenState();
@@ -603,16 +603,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               ),
               OutlinedButton.icon(
                 onPressed: () async {
-                  final ok = await widget.onSyncDeviceUsageNow();
+                  final status = await widget.onSyncDeviceUsageNow(
+                    _githubRepoController.text.trim(),
+                    _githubTokenController.text.trim(),
+                  );
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        ok
-                            ? 'Đã đồng bộ lịch sử dùng máy lên trang Giám sát!'
-                            : 'Cần nhập GitHub Token hợp lệ trước khi đồng bộ.',
-                      ),
-                    ),
+                    SnackBar(content: Text(status)),
                   );
                 },
                 icon: const Icon(Icons.cloud_upload_rounded),

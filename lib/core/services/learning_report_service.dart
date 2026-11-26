@@ -128,19 +128,23 @@ class LearningReportService {
   }
 
   /// Đồng bộ riêng trạng thái thiết bị hiện tại (đang mở app gì, dùng từng app bao lâu) lên GitHub.
-  Future<bool> syncDeviceUsageNow({
+  /// Trả về chuỗi thông báo kết quả rõ ràng (hoặc mã lỗi HTTP nếu thất bại).
+  Future<String> syncDeviceUsageNow({
     required ChildProfile profile,
     required DeviceLockService deviceLockService,
+    String? overrideRepo,
+    String? overrideToken,
   }) async {
-    if (profile.githubToken.trim().isEmpty ||
-        !profile.githubRepo.trim().contains('/')) {
-      return false;
+    final repo = (overrideRepo ?? profile.githubRepo).trim();
+    final token = (overrideToken ?? profile.githubToken).trim();
+    if (token.isEmpty || !repo.contains('/')) {
+      return 'Chưa nhập GitHub Repo hoặc GitHub Token hợp lệ.';
     }
     final device = await deviceLockService.getDeviceInfo();
     final usageSnapshot = await deviceLockService.getUsageHistory();
-    return _pushToGitHub(
-      repo: profile.githubRepo.trim(),
-      token: profile.githubToken.trim(),
+    return _pushToGitHubWithStatus(
+      repo: repo,
+      token: token,
       newSession: null,
       deviceMonitorRecord: _buildDeviceMonitorRecord(profile, device, usageSnapshot),
     );
@@ -174,6 +178,21 @@ class LearningReportService {
     required Map<String, dynamic>? newSession,
     required Map<String, dynamic> deviceMonitorRecord,
   }) async {
+    final msg = await _pushToGitHubWithStatus(
+      repo: repo,
+      token: token,
+      newSession: newSession,
+      deviceMonitorRecord: deviceMonitorRecord,
+    );
+    return msg.startsWith('OK:');
+  }
+
+  Future<String> _pushToGitHubWithStatus({
+    required String repo,
+    required String token,
+    required Map<String, dynamic>? newSession,
+    required Map<String, dynamic> deviceMonitorRecord,
+  }) async {
     try {
       final uri = Uri.parse(
         'https://api.github.com/repos/$repo/contents/$_remoteReportPath',
@@ -181,6 +200,7 @@ class LearningReportService {
       final headers = {
         'Authorization': 'Bearer $token',
         'Accept': 'application/vnd.github+json',
+        'User-Agent': 'LockWill-App',
         'Content-Type': 'application/json',
       };
 
@@ -188,7 +208,9 @@ class LearningReportService {
       List<dynamic> existingSessions = [];
       List<dynamic> existingMonitors = [];
 
-      final getRes = await http.get(uri, headers: headers);
+      final getRes = await http
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: 12));
       if (getRes.statusCode == 200) {
         final body = jsonDecode(getRes.body) as Map<String, dynamic>;
         sha = body['sha'] as String?;
@@ -201,6 +223,8 @@ class LearningReportService {
         existingMonitors = List<dynamic>.from(
           (parsed['deviceMonitors'] as List<dynamic>?) ?? const [],
         );
+      } else if (getRes.statusCode != 404) {
+        return 'Lỗi đọc GitHub (HTTP ${getRes.statusCode}). Kiểm tra lại Token hoặc quyền Contents.';
       }
 
       if (newSession != null) {
@@ -226,14 +250,15 @@ class LearningReportService {
         if (sha != null) 'sha': sha,
       };
 
-      final putRes = await http.put(
-        uri,
-        headers: headers,
-        body: jsonEncode(putBody),
-      );
-      return putRes.statusCode == 200 || putRes.statusCode == 201;
-    } catch (_) {
-      return false;
+      final putRes = await http
+          .put(uri, headers: headers, body: jsonEncode(putBody))
+          .timeout(const Duration(seconds: 12));
+      if (putRes.statusCode == 200 || putRes.statusCode == 201) {
+        return 'OK: Đã đồng bộ lịch sử lên trang Giám sát thành công!';
+      }
+      return 'Lỗi ghi GitHub (HTTP ${putRes.statusCode}). Đảm bảo Token có quyền Contents: Read and write.';
+    } catch (e) {
+      return 'Lỗi kết nối mạng: $e';
     }
   }
 }
