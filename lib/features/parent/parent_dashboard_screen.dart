@@ -274,9 +274,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       appBar: AppBar(
         title: const Text('Hồ sơ Bé & Cài đặt Phụ huynh'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 740),
+          child: ListView(
+            padding: const EdgeInsets.all(18),
+            children: [
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -716,6 +719,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             label: const Text('Lưu hồ sơ & cấu hình'),
           ),
         ],
+          ),
+        ),
       ),
     );
   }

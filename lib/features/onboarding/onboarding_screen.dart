@@ -81,9 +81,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
         child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(22),
-            children: [
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
               const Center(
                 child: AnimatedOwlMascot(
                   mood: OwlMood.happy,
@@ -229,6 +232,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ],
+              ),
+            ),
           ),
         ),
       ),

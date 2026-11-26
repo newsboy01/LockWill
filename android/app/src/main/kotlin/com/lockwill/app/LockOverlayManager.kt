@@ -18,13 +18,15 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
- * Hiển thị màn hình khóa phủ toàn màn hình (TYPE_APPLICATION_OVERLAY) trực tiếp đè lên
- * YouTube/TikTok/Game. Cách này hoạt động 100% trên OPPO ColorOS, Xiaomi, Samsung, Android 10-15
- * mà không bị chặn bởi giới hạn Background Activity Launch.
+ * Hiển thị màn hình khóa phủ toàn màn hình (TYPE_APPLICATION_OVERLAY) thích ứng theo DPI (dp)
+ * cho mọi kích thước điện thoại và máy tính bảng (Android 8-15, OPPO ColorOS, Xiaomi, Samsung).
  */
 object LockOverlayManager {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var overlayView: View? = null
+
+    private fun Context.dp(value: Int): Int =
+        (value * resources.displayMetrics.density).toInt()
 
     fun showBlockOverlay(context: Context, blockedAppName: String) {
         mainHandler.post {
@@ -58,57 +60,81 @@ object LockOverlayManager {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
                 setBackgroundColor(Color.parseColor("#FFF8EE"))
-                setPadding(64, 64, 64, 64)
+                setPadding(appCtx.dp(24), appCtx.dp(24), appCtx.dp(24), appCtx.dp(24))
                 isClickable = true
                 isFocusable = true
             }
 
+            val cardBg = GradientDrawable().apply {
+                setColor(Color.WHITE)
+                cornerRadius = appCtx.dp(24).toFloat()
+            }
+
+            val screenWidthPx = appCtx.resources.displayMetrics.widthPixels
+            val maxCardWidth = minOf(screenWidthPx - appCtx.dp(40), appCtx.dp(440))
+
+            val card = LinearLayout(appCtx).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                background = cardBg
+                setPadding(appCtx.dp(24), appCtx.dp(28), appCtx.dp(24), appCtx.dp(28))
+                layoutParams = LinearLayout.LayoutParams(
+                    maxCardWidth,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+
             val owlEmoji = TextView(appCtx).apply {
                 text = "🦉🔒"
-                textSize = 64f
+                textSize = 56f
                 gravity = Gravity.CENTER
             }
 
             val title = TextView(appCtx).apply {
                 text = "Hết giờ giải trí rồi!"
-                textSize = 26f
+                textSize = 24f
                 setTypeface(null, Typeface.BOLD)
                 setTextColor(Color.parseColor("#1E293B"))
                 gravity = Gravity.CENTER
-                setPadding(0, 32, 0, 16)
+                setPadding(0, appCtx.dp(14), 0, appCtx.dp(8))
             }
 
             val subtitle = TextView(appCtx).apply {
                 text = "Ứng dụng \"$blockedAppName\" đang bị LockWill khóa.\nHãy làm bài tập để nhận thêm thời gian nhé!"
-                textSize = 17f
+                textSize = 16f
                 setTextColor(Color.parseColor("#475569"))
                 gravity = Gravity.CENTER
-                setPadding(0, 0, 0, 48)
+                setPadding(0, 0, 0, appCtx.dp(24))
             }
 
             val btnBg = GradientDrawable().apply {
                 setColor(Color.parseColor("#FF8C42"))
-                cornerRadius = 48f
+                cornerRadius = appCtx.dp(20).toFloat()
             }
 
             val unlockBtn = Button(appCtx).apply {
                 text = "Làm bài tập mở khóa ngay 🚀"
-                textSize = 18f
+                textSize = 17f
                 isAllCaps = false
                 setTypeface(null, Typeface.BOLD)
                 setTextColor(Color.WHITE)
                 background = btnBg
-                setPadding(56, 36, 56, 36)
+                setPadding(appCtx.dp(24), appCtx.dp(14), appCtx.dp(24), appCtx.dp(14))
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
                 setOnClickListener {
                     hideOverlay(appCtx)
                     bringLockScreenToFront(appCtx)
                 }
             }
 
-            root.addView(owlEmoji)
-            root.addView(title)
-            root.addView(subtitle)
-            root.addView(unlockBtn)
+            card.addView(owlEmoji)
+            card.addView(title)
+            card.addView(subtitle)
+            card.addView(unlockBtn)
+            root.addView(card)
 
             try {
                 wm.addView(root, params)

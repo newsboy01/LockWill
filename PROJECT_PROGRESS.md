@@ -51,6 +51,7 @@
 - [x] Màn hình Làm bài (`QuizScreen`) hỗ trợ nút lớn cho trẻ nhỏ, gợi ý nhẹ nhàng khi làm sai, không phạt nặng
 - [x] Khung `AudioGuideService` đọc câu hỏi/hướng dẫn cho trẻ Lớp 1–2
 - [x] Cổng Phụ huynh (`ParentGateDialog`) bảo vệ bằng PIN/phép tính và `ParentDashboardScreen`
+- [x] Chuẩn hóa Responsive UI/UX toàn bộ ứng dụng (`ResponsiveLayout`) cho điện thoại nhỏ, điện thoại lớn, máy tính bảng (Tablet) và xoay ngang (bố cục 2 cột trên Tablet ngang, chống tràn chữ/tràn khung, giới hạn `textScaler`, chuẩn hóa đơn vị `dp` cho màn hình khóa Overlay Android)
 - [x] Màn hình Thiết lập Lần Đầu (`OnboardingScreen`) khi mới cài app: nhập Tên bé, Tuổi, Kiến thức Lớp, Bộ sách, Tên Bố/Mẹ giám sát, Vị trí, Mã PIN để chọn lọc thư viện câu hỏi ngay từ đầu
 - [x] Mở rộng giới hạn trần tối đa mỗi ngày lên **480 phút (8 giờ)** và cho phép tùy chỉnh thời lượng mỗi lần gia hạn (`5–30 phút`) + số câu hỏi cơ bản tự động tỷ lệ theo thời lượng và tăng tiến dần theo lượt (giữ chuẩn kiến thức lớp hiện tại)
 - [x] Tập trung mở rộng đa dạng kiến thức **Lớp 1** (Tiếng Việt ghép vần & chính tả `c/k`, `g/gh`; Tiếng Anh Lớp 1 màu sắc/con vật/số đếm/đồ dùng/chào hỏi; Toán lời văn/hình học/xem giờ/lịch tuần; TN&XH; Đạo đức; Đố vui)

@@ -4,6 +4,7 @@ import '../../core/models/child_profile.dart';
 import '../../core/models/question.dart';
 import '../../core/services/audio_guide_service.dart';
 import '../../core/services/escalation_engine.dart';
+import '../../core/ui/responsive_layout.dart';
 import '../../core/widgets/animated_owl_mascot.dart';
 import '../../core/widgets/tactile_3d_button.dart';
 
@@ -54,11 +55,8 @@ class _QuizScreenState extends State<QuizScreen>
   int? _wrongSelectedIndex;
   int? _correctSelectedIndex;
 
-  // Dành cho dạng fill_number
   String _typedNumber = '';
-  // Dành cho dạng word_build
   final List<String> _builtPieces = <String>[];
-  // Dành cho dạng drag_drop
   String? _droppedAnswer;
 
   OwlMood _owlMood = OwlMood.idle;
@@ -215,8 +213,8 @@ class _QuizScreenState extends State<QuizScreen>
 
   @override
   Widget build(BuildContext context) {
+    final r = ResponsiveLayout(context);
     final question = widget.questions[_currentIndex];
-    final isBigButtons = widget.profile.isAudioFirstGrade;
 
     return Scaffold(
       body: Container(
@@ -228,227 +226,268 @@ class _QuizScreenState extends State<QuizScreen>
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                    ),
-                    Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: EdgeInsets.all(r.isCompactPhone ? 12 : 18),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight -
+                        (r.isCompactPhone ? 24 : 36),
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: r.useSplitLayout ? 1040 : r.maxContentWidth,
+                      ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(
-                            'Câu ${_currentIndex + 1}/${widget.questions.length} • ${question.subject}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: LinearProgressIndicator(
-                              value: (_currentIndex + 1) / widget.questions.length,
-                              minHeight: 10,
-                              color: const Color(0xFF2EC4B6),
-                              backgroundColor: Colors.white,
-                            ),
-                          ),
+                          _buildHeader(question, r),
+                          const SizedBox(height: 12),
+                          if (r.useSplitLayout)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: _buildQuestionPanel(question, r),
+                                ),
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  child: _buildInteractiveArea(question, r),
+                                ),
+                              ],
+                            )
+                          else ...[
+                            _buildQuestionPanel(question, r),
+                            SizedBox(height: r.isCompactPhone ? 14 : 20),
+                            _buildInteractiveArea(question, r),
+                          ],
+                          const SizedBox(height: 6),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    if (_streak >= 2)
-                      Container(
-                        margin: const EdgeInsets.only(right: 6),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF3B0),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Text(
-                          '🔥 $_streak',
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    IconButton.filledTonal(
-                      onPressed: () =>
-                          widget.audioGuide.speak(question.audioText),
-                      icon: const Icon(Icons.volume_up_rounded, size: 26),
-                      tooltip: 'Nghe lại câu hỏi',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    AnimatedOwlMascot(
-                      mood: _owlMood,
-                      size: 76,
-                      accessory: widget.profile.owlAccessory,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _badgeForType(question.type),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF1D6FA5),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _owlMood == OwlMood.happy
-                                  ? 'Tuyệt vời! ${widget.profile.name} giỏi quá 🎉'
-                                  : (_owlMood == OwlMood.encourage
-                                      ? 'Cố lên! Xem gợi ý bên dưới nhé 💪'
-                                      : 'Bạn Cú đang cổ vũ ${widget.profile.name}!'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                AnimatedBuilder(
-                  animation: _shakeController,
-                  builder: (context, child) {
-                    final dx =
-                        math.sin(_shakeController.value * math.pi * 4) * 10;
-                    return Transform.translate(
-                      offset: Offset(dx, 0),
-                      child: child,
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: _owlMood == OwlMood.happy
-                            ? const Color(0xFF2EC4B6)
-                            : (_owlMood == OwlMood.encourage
-                                ? const Color(0xFFFF8C42)
-                                : const Color(0xFFDCEEF8)),
-                        width: 2.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        if (question.visualEmoji.isNotEmpty) ...[
-                          Text(
-                            question.visualEmoji,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 30),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                        Text(
-                          question.prompt,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: isBigButtons ? 20 : 18,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1F2937),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
-                if (_showHint) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF4D6),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFFFC857)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Text('💡', style: TextStyle(fontSize: 20)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            question.hintText,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF7A4E00),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                const Spacer(),
-                _buildInteractiveArea(question, isBigButtons),
-                const SizedBox(height: 6),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildInteractiveArea(Question question, bool isBigButtons) {
+  Widget _buildHeader(Question question, ResponsiveLayout r) {
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Câu ${_currentIndex + 1}/${widget.questions.length} • ${question.subject}',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: r.isCompactPhone ? 13.5 : 15,
+                ),
+              ),
+              const SizedBox(height: 4),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: (_currentIndex + 1) / widget.questions.length,
+                  minHeight: 10,
+                  color: const Color(0xFF2EC4B6),
+                  backgroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        if (_streak >= 2)
+          Container(
+            margin: const EdgeInsets.only(right: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3B0),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Text(
+              '🔥 $_streak',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        IconButton.filledTonal(
+          onPressed: () => widget.audioGuide.speak(question.audioText),
+          icon: const Icon(Icons.volume_up_rounded, size: 26),
+          tooltip: 'Nghe lại câu hỏi',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuestionPanel(Question question, ResponsiveLayout r) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            AnimatedOwlMascot(
+              mood: _owlMood,
+              size: r.owlQuizSize,
+              accessory: widget.profile.owlAccessory,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _badgeForType(question.type),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1D6FA5),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _owlMood == OwlMood.happy
+                          ? 'Tuyệt vời! ${widget.profile.name} giỏi quá 🎉'
+                          : (_owlMood == OwlMood.encourage
+                              ? 'Cố lên! Xem gợi ý bên dưới nhé 💪'
+                              : 'Bạn Cú đang cổ vũ ${widget.profile.name}!'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: r.isCompactPhone ? 13 : 14.5,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        AnimatedBuilder(
+          animation: _shakeController,
+          builder: (context, child) {
+            final dx = math.sin(_shakeController.value * math.pi * 4) * 10;
+            return Transform.translate(offset: Offset(dx, 0), child: child);
+          },
+          child: Container(
+            padding: EdgeInsets.all(r.isCompactPhone ? 14 : 18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: _owlMood == OwlMood.happy
+                    ? const Color(0xFF2EC4B6)
+                    : (_owlMood == OwlMood.encourage
+                        ? const Color(0xFFFF8C42)
+                        : const Color(0xFFDCEEF8)),
+                width: 2.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                if (question.visualEmoji.isNotEmpty) ...[
+                  Text(
+                    question.visualEmoji,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: r.emojiFontSize),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  question.prompt,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: r.promptFontSize,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1F2937),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_showHint) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF4D6),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFFC857)),
+            ),
+            child: Row(
+              children: [
+                const Text('💡', style: TextStyle(fontSize: 20)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    question.hintText,
+                    style: TextStyle(
+                      fontSize: r.isCompactPhone ? 13 : 14.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF7A4E00),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildInteractiveArea(Question question, ResponsiveLayout r) {
     switch (question.type) {
       case 'fill_number':
-        return _buildNumberPad(isBigButtons);
+        return _buildNumberPad(r);
       case 'word_build':
-        return _buildWordBuildArea(question, isBigButtons);
+        return _buildWordBuildArea(question, r);
       case 'drag_drop':
-        return _buildDragDropArea(question, isBigButtons);
+        return _buildDragDropArea(question, r);
       default:
-        return _buildOptionGrid(question, isBigButtons);
+        return _buildOptionGrid(question, r);
     }
   }
 
-  /// Dạng 1: Trắc nghiệm / Đếm hình / So sánh / Đúng-Sai với nút nổi 3D.
-  Widget _buildOptionGrid(Question question, bool isBigButtons) {
-    final crossAxisCount = question.options.length == 3 ? 3 : 2;
+  Widget _buildOptionGrid(Question question, ResponsiveLayout r) {
+    final hasLongOption = question.options.any((o) => o.length > 16);
+    final crossAxisCount =
+        hasLongOption ? 1 : (question.options.length == 3 ? 3 : 2);
     const palette = [
       (Color(0xFF3A86FF), Color(0xFF1E56C5)),
       (Color(0xFFFF8C42), Color(0xFFD16014)),
@@ -456,72 +495,100 @@ class _QuizScreenState extends State<QuizScreen>
       (Color(0xFF00B4D8), Color(0xFF0077B6)),
     ];
 
+    if (crossAxisCount == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: List.generate(question.options.length, (index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _buildOptionButton(question, index, palette, r),
+          );
+        }),
+      );
+    }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: question.options.length == 2 ? 1.85 : 1.75,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: r.isCompactPhone ? 1.85 : 1.7,
       ),
       itemCount: question.options.length,
-      itemBuilder: (context, index) {
-        final isWrong = _wrongSelectedIndex == index;
-        final isCorrect = _correctSelectedIndex == index;
-        final baseColor = isCorrect
-            ? const Color(0xFF2EC4B6)
-            : (isWrong
-                ? const Color(0xFFFF6B6B)
-                : palette[index % palette.length].$1);
-        final shadowColor = isCorrect
-            ? const Color(0xFF1A8A7F)
-            : (isWrong
-                ? const Color(0xFFC92A2A)
-                : palette[index % palette.length].$2);
-
-        return AnimatedScale(
-          scale: isCorrect ? 1.05 : 1.0,
-          duration: const Duration(milliseconds: 160),
-          child: Tactile3DButton(
-            color: baseColor,
-            shadowColor: shadowColor,
-            onPressed: () {
-              if (index == question.correctIndex) {
-                _onCorrectAnswer(selectedIndex: index);
-              } else {
-                _onWrongAnswer(selectedIndex: index);
-              }
-            },
-            child: Text(
-              question.options[index],
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: isBigButtons ? 21 : 18,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        );
-      },
+      itemBuilder: (context, index) =>
+          _buildOptionButton(question, index, palette, r),
     );
   }
 
-  /// Dạng 2: Ghép vần / Ghép chữ / Ghép từ (chạm lần lượt các mảnh chữ).
-  Widget _buildWordBuildArea(Question question, bool isBigButtons) {
+  Widget _buildOptionButton(
+    Question question,
+    int index,
+    List<(Color, Color)> palette,
+    ResponsiveLayout r,
+  ) {
+    final isWrong = _wrongSelectedIndex == index;
+    final isCorrect = _correctSelectedIndex == index;
+    final baseColor = isCorrect
+        ? const Color(0xFF2EC4B6)
+        : (isWrong
+            ? const Color(0xFFFF6B6B)
+            : palette[index % palette.length].$1);
+    final shadowColor = isCorrect
+        ? const Color(0xFF1A8A7F)
+        : (isWrong
+            ? const Color(0xFFC92A2A)
+            : palette[index % palette.length].$2);
+
+    return AnimatedScale(
+      scale: isCorrect ? 1.04 : 1.0,
+      duration: const Duration(milliseconds: 160),
+      child: Tactile3DButton(
+        color: baseColor,
+        shadowColor: shadowColor,
+        padding: EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: r.isCompactPhone ? 10 : 14,
+        ),
+        onPressed: () {
+          if (index == question.correctIndex) {
+            _onCorrectAnswer(selectedIndex: index);
+          } else {
+            _onWrongAnswer(selectedIndex: index);
+          }
+        },
+        child: Text(
+          question.options[index],
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: r.buttonFontSize,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWordBuildArea(Question question, ResponsiveLayout r) {
     final targetCount = question.expectedSequence.length;
+    final boxW = r.isCompactPhone ? 68.0 : (r.isTablet ? 98.0 : 82.0);
+    final boxH = r.isCompactPhone ? 54.0 : 64.0;
+
     return Column(
       children: [
-        // Hàng ô trống hiển thị chữ đang ghép
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 10,
+          runSpacing: 10,
           children: List.generate(targetCount, (i) {
             final filled = i < _builtPieces.length ? _builtPieces[i] : '';
             return Container(
-              width: 86,
-              height: 64,
-              margin: const EdgeInsets.symmetric(horizontal: 6),
+              width: boxW,
+              height: boxH,
               decoration: BoxDecoration(
                 color: filled.isEmpty
                     ? Colors.white
@@ -538,7 +605,7 @@ class _QuizScreenState extends State<QuizScreen>
                 child: Text(
                   filled.isEmpty ? '?' : filled,
                   style: TextStyle(
-                    fontSize: 26,
+                    fontSize: r.isCompactPhone ? 22 : 26,
                     fontWeight: FontWeight.w900,
                     color: filled.isEmpty
                         ? Colors.grey.shade400
@@ -551,13 +618,13 @@ class _QuizScreenState extends State<QuizScreen>
         ),
         const SizedBox(height: 14),
         Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 10,
           alignment: WrapAlignment.center,
           children: question.options.map((piece) {
             final used = _builtPieces.contains(piece);
             return SizedBox(
-              width: 110,
+              width: r.isCompactPhone ? 94 : 112,
               child: Tactile3DButton(
                 color: used ? Colors.grey.shade300 : const Color(0xFF8338EC),
                 shadowColor:
@@ -571,7 +638,7 @@ class _QuizScreenState extends State<QuizScreen>
                 child: Text(
                   piece,
                   style: TextStyle(
-                    fontSize: isBigButtons ? 24 : 20,
+                    fontSize: r.buttonFontSize + 2,
                     fontWeight: FontWeight.w900,
                     color: used ? Colors.grey : Colors.white,
                   ),
@@ -581,7 +648,7 @@ class _QuizScreenState extends State<QuizScreen>
           }).toList(),
         ),
         if (_builtPieces.isNotEmpty) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           TextButton.icon(
             onPressed: () => setState(() => _builtPieces.clear()),
             icon: const Icon(Icons.refresh_rounded),
@@ -592,8 +659,7 @@ class _QuizScreenState extends State<QuizScreen>
     );
   }
 
-  /// Dạng 3: Kéo thả đáp án vào ô trống (Drag & Drop) + hỗ trợ chạm cho bé nhỏ.
-  Widget _buildDragDropArea(Question question, bool isBigButtons) {
+  Widget _buildDragDropArea(Question question, ResponsiveLayout r) {
     return Column(
       children: [
         DragTarget<int>(
@@ -613,7 +679,7 @@ class _QuizScreenState extends State<QuizScreen>
             final isHovering = candidateData.isNotEmpty;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 160),
-              height: 78,
+              height: r.isCompactPhone ? 66 : 78,
               width: double.infinity,
               margin: const EdgeInsets.only(bottom: 14),
               decoration: BoxDecoration(
@@ -632,9 +698,12 @@ class _QuizScreenState extends State<QuizScreen>
               ),
               child: Center(
                 child: Text(
-                  _droppedAnswer ?? '⬇️ Kéo đáp án đúng thả vào đây ⬇️',
+                  _droppedAnswer ?? '⬇️ Kéo hoặc chạm đáp án đúng vào đây ⬇️',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: _droppedAnswer != null ? 24 : 16,
+                    fontSize: _droppedAnswer != null
+                        ? r.buttonFontSize + 3
+                        : (r.isCompactPhone ? 14 : 16),
                     fontWeight: FontWeight.w800,
                     color: _droppedAnswer != null
                         ? const Color(0xFF0F766E)
@@ -646,29 +715,29 @@ class _QuizScreenState extends State<QuizScreen>
           },
         ),
         Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 10,
           alignment: WrapAlignment.center,
           children: List.generate(question.options.length, (idx) {
             final label = question.options[idx];
             final chip = Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: EdgeInsets.symmetric(
+                horizontal: r.isCompactPhone ? 16 : 20,
+                vertical: r.isCompactPhone ? 11 : 14,
+              ),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFFFFA94D), Color(0xFFFF8C42)],
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
-                  BoxShadow(
-                    color: Color(0xFFD16014),
-                    offset: Offset(0, 5),
-                  ),
+                  BoxShadow(color: Color(0xFFD16014), offset: Offset(0, 5)),
                 ],
               ),
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: isBigButtons ? 20 : 18,
+                  fontSize: r.buttonFontSize,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
                 ),
@@ -684,7 +753,6 @@ class _QuizScreenState extends State<QuizScreen>
               childWhenDragging: Opacity(opacity: 0.35, child: chip),
               child: GestureDetector(
                 onTap: () {
-                  // Cho phép chạm nhanh nếu bé Lớp 1 khó giữ tay kéo trên màn hình cảm ứng.
                   setState(() => _droppedAnswer = label);
                   if (idx == question.correctIndex) {
                     _onCorrectAnswer(selectedIndex: idx);
@@ -704,14 +772,13 @@ class _QuizScreenState extends State<QuizScreen>
     );
   }
 
-  /// Dạng 4: Bàn phím số lớn tự điền đáp án.
-  Widget _buildNumberPad(bool isBigButtons) {
+  Widget _buildNumberPad(ResponsiveLayout r) {
     final keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', '✓'];
     return Column(
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: EdgeInsets.symmetric(vertical: r.isCompactPhone ? 8 : 10),
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -722,7 +789,9 @@ class _QuizScreenState extends State<QuizScreen>
             _typedNumber.isEmpty ? 'Bấm số đáp án...' : _typedNumber,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: _typedNumber.isEmpty ? 18 : 28,
+              fontSize: _typedNumber.isEmpty
+                  ? (r.isCompactPhone ? 16 : 18)
+                  : (r.isCompactPhone ? 24 : 28),
               fontWeight: FontWeight.w800,
               color: _typedNumber.isEmpty
                   ? Colors.grey.shade400
@@ -733,11 +802,11 @@ class _QuizScreenState extends State<QuizScreen>
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
-            childAspectRatio: 2.35,
+            childAspectRatio: r.isCompactPhone ? 2.6 : 2.3,
           ),
           itemCount: keys.length,
           itemBuilder: (context, idx) {
@@ -747,7 +816,7 @@ class _QuizScreenState extends State<QuizScreen>
             return Tactile3DButton(
               depth: 4,
               borderRadius: 16,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 6),
               color: isSubmit
                   ? const Color(0xFF2EC4B6)
                   : (isBackspace
@@ -775,7 +844,7 @@ class _QuizScreenState extends State<QuizScreen>
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: isBigButtons ? 22 : 20,
+                  fontSize: r.buttonFontSize + 1,
                   fontWeight: FontWeight.w800,
                   color: isSubmit
                       ? Colors.white
