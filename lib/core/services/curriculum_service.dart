@@ -32,7 +32,7 @@ class CurriculumService {
     _cachedQuestions ??= await _loadFromAssets();
     final all = _cachedQuestions!;
 
-    // Lọc các câu tĩnh cùng lớp chưa từng hỏi trong phiên/ngày.
+    // Lọc câu tĩnh cùng lớp chưa từng hỏi trong ngày.
     final staticPool = all
         .where((q) =>
             q.grade == profile.grade && !_askedPromptsInSession.contains(q.prompt))
@@ -42,9 +42,9 @@ class CurriculumService {
     final result = <Question>[];
     final usedPrompts = <String>{};
 
-    // Lấy tối đa ~40% câu tĩnh đa dạng môn (Tiếng Việt, Tiếng Anh, Khoa học, Đố vui),
-    // phần còn lại sinh động theo đúng trình độ lớp để KHÔNG BAO GIỜ trùng lặp.
-    final maxStatic = (count * 0.4).ceil().clamp(1, staticPool.length);
+    // Lớp 1 ưu tiên lấy đa dạng dạng bài tĩnh (Ghép vần, Kéo thả hình học, Đố vui, Đúng/Sai)
+    final ratio = profile.grade == 1 ? 0.6 : 0.4;
+    final maxStatic = (count * ratio).ceil().clamp(1, staticPool.length);
     for (final q in staticPool.take(maxStatic)) {
       result.add(q);
       usedPrompts.add(q.prompt);
@@ -52,7 +52,7 @@ class CurriculumService {
     }
 
     var guard = 0;
-    while (result.length < count && guard < 100) {
+    while (result.length < count && guard < 120) {
       guard++;
       final generated = _generateDynamicQuestion(
         profile: profile,
@@ -77,14 +77,15 @@ class CurriculumService {
     required int seedIndex,
   }) {
     final grade = profile.grade;
-    final mode = seedIndex % 3;
+    final mode = seedIndex % 5;
 
+    // 1. Đếm hình trực quan (Tối ưu cho Lớp 1-2)
     if (mode == 0 && grade <= 2) {
-      // Dạng đếm hình trực quan (Visual Count)
-      final emojis = ['🍎', '🍓', '⭐', '🎈', '🐥', '🌸'];
+      final emojis = ['🍎', '🍓', '⭐', '🎈', '🐥', '🌸', '🚗', '🧁'];
       final icon = emojis[_random.nextInt(emojis.length)];
-      final a = _random.nextInt(4) + 1;
-      final b = _random.nextInt(4) + 1;
+      final maxEach = difficulty == QuestionDifficulty.easy ? 4 : 6;
+      final a = _random.nextInt(maxEach) + 1;
+      final b = _random.nextInt(maxEach) + 1;
       final ans = a + b;
       return _buildNumericChoiceQuestion(
         id: 'dyn_vc_${DateTime.now().microsecondsSinceEpoch}_$seedIndex',
@@ -97,13 +98,53 @@ class CurriculumService {
         audioText: 'Bé hãy đếm xem có tất cả bao nhiêu hình trên màn hình nhé!',
         visualEmoji: '${icon * a}  +  ${icon * b}  =  ?',
         answer: ans,
-        hintText: 'Đếm nhóm bên trái có $a, đếm tiếp nhóm bên phải thêm $b nữa!',
+        hintText: 'Nhóm bên trái có $a hình, đếm tiếp nhóm bên phải thêm $b hình nữa!',
       );
     }
 
+    // 2. Kéo thả số còn thiếu vào phép tính / dãy số (Drag & Drop)
     if (mode == 1) {
-      // Dạng so sánh > < = (Compare Math)
-      final maxVal = grade == 1 ? 15 : (grade == 2 ? 99 : 500);
+      if (grade == 1) {
+        final start = _random.nextInt(12) + 1;
+        final ans = start + 2;
+        return _buildNumericChoiceQuestion(
+          id: 'dyn_dd_seq_${DateTime.now().microsecondsSinceEpoch}_$seedIndex',
+          grade: grade,
+          textbook: profile.textbook.code,
+          week: profile.currentWeek,
+          difficulty: difficulty,
+          type: 'drag_drop',
+          prompt: 'Kéo số còn thiếu vào ô trống: $start, ${start + 1}, [ ? ], ${start + 3}',
+          audioText: 'Bé hãy đếm xuôi: $start, ${start + 1}, rồi đến số mấy? Kéo số đúng vào ô trống nhé!',
+          visualEmoji: '$start ➡️ ${start + 1} ➡️ ⬜ ➡️ ${start + 3}',
+          answer: ans,
+          hintText: 'Đứng ngay sau số ${start + 1} là số $ans đó!',
+        );
+      } else {
+        final a = _random.nextInt(15) + 5;
+        final b = _random.nextInt(15) + 5;
+        final sum = a + b;
+        return _buildNumericChoiceQuestion(
+          id: 'dyn_dd_math_${DateTime.now().microsecondsSinceEpoch}_$seedIndex',
+          grade: grade,
+          textbook: profile.textbook.code,
+          week: profile.currentWeek,
+          difficulty: difficulty,
+          type: 'drag_drop',
+          prompt: 'Kéo số thích hợp thả vào ô trống: $a + [ ? ] = $sum',
+          audioText: '$a cộng mấy bằng $sum? Bé hãy kéo số đúng thả vào ô trống!',
+          visualEmoji: '$a  +  ⬜  =  $sum',
+          answer: b,
+          hintText: 'Lấy $sum trừ đi $a sẽ ra số cần tìm là $b!',
+        );
+      }
+    }
+
+    // 3. So sánh > < =
+    if (mode == 2) {
+      final maxVal = grade == 1
+          ? (difficulty == QuestionDifficulty.easy ? 10 : 20)
+          : (grade == 2 ? 99 : 500);
       final a = _random.nextInt(maxVal) + 1;
       final b = _random.nextInt(maxVal) + 1;
       final correctIdx = a > b ? 0 : (a < b ? 1 : 2);
@@ -112,7 +153,7 @@ class CurriculumService {
         grade: grade,
         textbookCode: profile.textbook.code,
         week: profile.currentWeek,
-        subject: 'Toán',
+        subject: 'Toán - So sánh',
         difficulty: difficulty,
         type: 'compare_math',
         prompt: 'Chọn dấu thích hợp: $a  .....  $b',
@@ -126,21 +167,22 @@ class CurriculumService {
       );
     }
 
-    // Dạng phép tính theo từng lớp (Toán nhập số hoặc trắc nghiệm)
+    // 4 & 5. Phép tính theo đúng chương trình lớp 1..5 (tự nhập bàn phím hoặc trắc nghiệm)
     late int a;
     late int b;
     late String op;
     late int ans;
 
     if (grade == 1) {
+      final limit = difficulty == QuestionDifficulty.easy ? 10 : 18;
       final isAdd = _random.nextBool();
       if (isAdd) {
-        a = _random.nextInt(8) + 1;
-        b = _random.nextInt(10 - a) + 1;
+        a = _random.nextInt(limit - 2) + 1;
+        b = _random.nextInt(limit - a) + 1;
         op = '+';
         ans = a + b;
       } else {
-        a = _random.nextInt(8) + 3;
+        a = _random.nextInt(limit - 2) + 3;
         b = _random.nextInt(a - 1) + 1;
         op = '-';
         ans = a - b;
@@ -166,24 +208,23 @@ class CurriculumService {
       op = '×';
       ans = a * b;
     } else {
-      a = _random.nextInt(40) + 12;
+      a = _random.nextInt(35) + 12;
       b = _random.nextInt(9) + 3;
       op = '×';
       ans = a * b;
     }
 
-    final useFillNumber = seedIndex % 2 == 0;
-    if (useFillNumber) {
+    if (mode == 3) {
       return Question(
         id: 'dyn_fill_${DateTime.now().microsecondsSinceEpoch}_$seedIndex',
         grade: grade,
         textbookCode: profile.textbook.code,
         week: profile.currentWeek,
-        subject: 'Toán',
+        subject: 'Toán - Tự điền',
         difficulty: difficulty,
         type: 'fill_number',
-        prompt: 'Điền kết quả đúng của phép tính: $a $op $b = ?',
-        audioText: 'Bé hãy tính và nhập kết quả của phép tính $a ${op == '×' ? 'nhân' : op} $b bằng bao nhiêu?',
+        prompt: 'Dùng bàn phím điền kết quả: $a $op $b = ?',
+        audioText: 'Bé hãy tính và bấm bàn phím nhập kết quả của $a ${op == '×' ? 'nhân' : op} $b nhé!',
         visualEmoji: '$a  $op  $b  =  ?',
         options: [ans.toString()],
         correctIndex: 0,
@@ -233,7 +274,7 @@ class CurriculumService {
       grade: grade,
       textbookCode: textbook,
       week: week,
-      subject: 'Toán',
+      subject: type == 'drag_drop' ? 'Toán - Kéo thả' : 'Toán',
       difficulty: difficulty,
       type: type,
       prompt: prompt,

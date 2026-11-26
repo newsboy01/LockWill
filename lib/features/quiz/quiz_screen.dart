@@ -5,6 +5,7 @@ import '../../core/models/question.dart';
 import '../../core/services/audio_guide_service.dart';
 import '../../core/services/escalation_engine.dart';
 import '../../core/widgets/animated_owl_mascot.dart';
+import '../../core/widgets/tactile_3d_button.dart';
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({
@@ -35,9 +36,15 @@ class _QuizScreenState extends State<QuizScreen>
   bool _isTransitioning = false;
   int? _wrongSelectedIndex;
   int? _correctSelectedIndex;
-  String _typedNumber = '';
-  OwlMood _owlMood = OwlMood.idle;
 
+  // Dành cho dạng fill_number
+  String _typedNumber = '';
+  // Dành cho dạng word_build
+  final List<String> _builtPieces = <String>[];
+  // Dành cho dạng drag_drop
+  String? _droppedAnswer;
+
+  OwlMood _owlMood = OwlMood.idle;
   late final AnimationController _shakeController;
 
   @override
@@ -80,7 +87,7 @@ class _QuizScreenState extends State<QuizScreen>
       await widget.audioGuide.speak('Giỏi quá! Đúng rồi!');
     }
 
-    await Future<void>.delayed(const Duration(milliseconds: 750));
+    await Future<void>.delayed(const Duration(milliseconds: 850));
     if (!mounted) return;
 
     if (_currentIndex + 1 >= widget.questions.length) {
@@ -94,6 +101,8 @@ class _QuizScreenState extends State<QuizScreen>
       _correctSelectedIndex = null;
       _wrongSelectedIndex = null;
       _typedNumber = '';
+      _builtPieces.clear();
+      _droppedAnswer = null;
       _isTransitioning = false;
     });
     _autoSpeakCurrent();
@@ -127,184 +136,278 @@ class _QuizScreenState extends State<QuizScreen>
     }
   }
 
+  void _checkWordBuild(Question question) {
+    if (_builtPieces.length < question.expectedSequence.length) return;
+    final built = _builtPieces.join('');
+    final expected = question.expectedSequence.join('');
+    if (built == expected) {
+      _onCorrectAnswer();
+    } else {
+      _onWrongAnswer();
+      Future<void>.delayed(const Duration(milliseconds: 550), () {
+        if (mounted) setState(() => _builtPieces.clear());
+      });
+    }
+  }
+
+  String _badgeForType(String type) {
+    switch (type) {
+      case 'word_build':
+        return '🧩 Ghép chữ';
+      case 'drag_drop':
+        return '🖐️ Kéo thả';
+      case 'fill_number':
+        return '⌨️ Tự điền';
+      case 'visual_count':
+        return '🔢 Đếm hình';
+      case 'compare_math':
+        return '⚖️ So sánh';
+      case 'true_false':
+        return '✅ Đúng / Sai';
+      default:
+        return '🎯 Trắc nghiệm';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final question = widget.questions[_currentIndex];
     final isBigButtons = widget.profile.isAudioFirstGrade;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3FAFF),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Câu ${_currentIndex + 1}/${widget.questions.length} • ${question.subject}',
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        actions: [
-          if (_streak >= 2)
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(right: 6),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3B0),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Text(
-                  '🔥 $_streak',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-            ),
-          IconButton(
-            onPressed: () => widget.audioGuide.speak(question.audioText),
-            icon: const Icon(Icons.volume_up_rounded, size: 30),
-            tooltip: 'Nghe lại câu hỏi',
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFE6F6FF), Color(0xFFFFFBF2)],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              LinearProgressIndicator(
-                value: (_currentIndex + 1) / widget.questions.length,
-                minHeight: 12,
-                borderRadius: BorderRadius.circular(12),
-                color: const Color(0xFF2EC4B6),
-                backgroundColor: const Color(0xFFDCEEF8),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  AnimatedOwlMascot(mood: _owlMood, size: 68),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Câu ${_currentIndex + 1}/${widget.questions.length} • ${question.subject}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: (_currentIndex + 1) / widget.questions.length,
+                              minHeight: 10,
+                              color: const Color(0xFF2EC4B6),
+                              backgroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        _owlMood == OwlMood.happy
-                            ? 'Tuyệt vời! Bé giỏi quá 🎉'
-                            : (_owlMood == OwlMood.encourage
-                                ? 'Cố lên! Đọc gợi ý bên dưới nhé 💪'
-                                : 'Bạn Cú đang cổ vũ ${widget.profile.name} đó!'),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF334155),
+                    ),
+                    const SizedBox(width: 8),
+                    if (_streak >= 2)
+                      Container(
+                        margin: const EdgeInsets.only(right: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3B0),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          '🔥 $_streak',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
+                    IconButton.filledTonal(
+                      onPressed: () =>
+                          widget.audioGuide.speak(question.audioText),
+                      icon: const Icon(Icons.volume_up_rounded, size: 26),
+                      tooltip: 'Nghe lại câu hỏi',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    AnimatedOwlMascot(mood: _owlMood, size: 76),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _badgeForType(question.type),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF1D6FA5),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _owlMood == OwlMood.happy
+                                  ? 'Tuyệt vời! ${widget.profile.name} giỏi quá 🎉'
+                                  : (_owlMood == OwlMood.encourage
+                                      ? 'Cố lên! Xem gợi ý bên dưới nhé 💪'
+                                      : 'Bạn Cú đang cổ vũ ${widget.profile.name}!'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF334155),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                AnimatedBuilder(
+                  animation: _shakeController,
+                  builder: (context, child) {
+                    final dx =
+                        math.sin(_shakeController.value * math.pi * 4) * 10;
+                    return Transform.translate(
+                      offset: Offset(dx, 0),
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: _owlMood == OwlMood.happy
+                            ? const Color(0xFF2EC4B6)
+                            : (_owlMood == OwlMood.encourage
+                                ? const Color(0xFFFF8C42)
+                                : const Color(0xFFDCEEF8)),
+                        width: 2.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        if (question.visualEmoji.isNotEmpty) ...[
+                          Text(
+                            question.visualEmoji,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 30),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        Text(
+                          question.prompt,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isBigButtons ? 20 : 18,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_showHint) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF4D6),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFFFC857)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Text('💡', style: TextStyle(fontSize: 20)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            question.hintText,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF7A4E00),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              AnimatedBuilder(
-                animation: _shakeController,
-                builder: (context, child) {
-                  final dx =
-                      math.sin(_shakeController.value * math.pi * 4) * 10;
-                  return Transform.translate(
-                    offset: Offset(dx, 0),
-                    child: child,
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: _owlMood == OwlMood.happy
-                          ? const Color(0xFF2EC4B6)
-                          : (_owlMood == OwlMood.encourage
-                              ? const Color(0xFFFF8C42)
-                              : Colors.transparent),
-                      width: 2.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      if (question.visualEmoji.isNotEmpty) ...[
-                        Text(
-                          question.visualEmoji,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 32),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                      Text(
-                        question.prompt,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: isBigButtons ? 21 : 18,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1F2937),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_showHint) ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF4D6),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFFC857)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Text('💡', style: TextStyle(fontSize: 22)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          question.hintText,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF7A4E00),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                const Spacer(),
+                _buildInteractiveArea(question, isBigButtons),
+                const SizedBox(height: 6),
               ],
-              const Spacer(),
-              if (question.type == 'fill_number')
-                _buildNumberPad(isBigButtons)
-              else
-                _buildOptionGrid(question, isBigButtons),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildInteractiveArea(Question question, bool isBigButtons) {
+    switch (question.type) {
+      case 'fill_number':
+        return _buildNumberPad(isBigButtons);
+      case 'word_build':
+        return _buildWordBuildArea(question, isBigButtons);
+      case 'drag_drop':
+        return _buildDragDropArea(question, isBigButtons);
+      default:
+        return _buildOptionGrid(question, isBigButtons);
+    }
+  }
+
+  /// Dạng 1: Trắc nghiệm / Đếm hình / So sánh / Đúng-Sai với nút nổi 3D.
   Widget _buildOptionGrid(Question question, bool isBigButtons) {
     final crossAxisCount = question.options.length == 3 ? 3 : 2;
+    const palette = [
+      (Color(0xFF3A86FF), Color(0xFF1E56C5)),
+      (Color(0xFFFF8C42), Color(0xFFD16014)),
+      (Color(0xFF8338EC), Color(0xFF5A189A)),
+      (Color(0xFF00B4D8), Color(0xFF0077B6)),
+    ];
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -312,16 +415,29 @@ class _QuizScreenState extends State<QuizScreen>
         crossAxisCount: crossAxisCount,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: question.options.length == 2 ? 1.8 : 1.65,
+        childAspectRatio: question.options.length == 2 ? 1.85 : 1.75,
       ),
       itemCount: question.options.length,
       itemBuilder: (context, index) {
         final isWrong = _wrongSelectedIndex == index;
         final isCorrect = _correctSelectedIndex == index;
+        final baseColor = isCorrect
+            ? const Color(0xFF2EC4B6)
+            : (isWrong
+                ? const Color(0xFFFF6B6B)
+                : palette[index % palette.length].$1);
+        final shadowColor = isCorrect
+            ? const Color(0xFF1A8A7F)
+            : (isWrong
+                ? const Color(0xFFC92A2A)
+                : palette[index % palette.length].$2);
+
         return AnimatedScale(
-          scale: isCorrect ? 1.06 : 1.0,
-          duration: const Duration(milliseconds: 180),
-          child: ElevatedButton(
+          scale: isCorrect ? 1.05 : 1.0,
+          duration: const Duration(milliseconds: 160),
+          child: Tactile3DButton(
+            color: baseColor,
+            shadowColor: shadowColor,
             onPressed: () {
               if (index == question.correctIndex) {
                 _onCorrectAnswer(selectedIndex: index);
@@ -329,25 +445,13 @@ class _QuizScreenState extends State<QuizScreen>
                 _onWrongAnswer(selectedIndex: index);
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isCorrect
-                  ? const Color(0xFF2EC4B6)
-                  : (isWrong
-                      ? const Color(0xFFFFE3E3)
-                      : const Color(0xFF3A86FF)),
-              foregroundColor:
-                  isWrong ? const Color(0xFFB91C1C) : Colors.white,
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(22),
-              ),
-            ),
             child: Text(
               question.options[index],
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: isBigButtons ? 21 : 18,
                 fontWeight: FontWeight.w800,
+                color: Colors.white,
               ),
             ),
           ),
@@ -356,21 +460,218 @@ class _QuizScreenState extends State<QuizScreen>
     );
   }
 
+  /// Dạng 2: Ghép vần / Ghép chữ / Ghép từ (chạm lần lượt các mảnh chữ).
+  Widget _buildWordBuildArea(Question question, bool isBigButtons) {
+    final targetCount = question.expectedSequence.length;
+    return Column(
+      children: [
+        // Hàng ô trống hiển thị chữ đang ghép
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(targetCount, (i) {
+            final filled = i < _builtPieces.length ? _builtPieces[i] : '';
+            return Container(
+              width: 86,
+              height: 64,
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+              decoration: BoxDecoration(
+                color: filled.isEmpty
+                    ? Colors.white
+                    : const Color(0xFFE0FBF8),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: filled.isEmpty
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF2EC4B6),
+                  width: 2.5,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  filled.isEmpty ? '?' : filled,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: filled.isEmpty
+                        ? Colors.grey.shade400
+                        : const Color(0xFF0F766E),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          children: question.options.map((piece) {
+            final used = _builtPieces.contains(piece);
+            return SizedBox(
+              width: 110,
+              child: Tactile3DButton(
+                color: used ? Colors.grey.shade300 : const Color(0xFF8338EC),
+                shadowColor:
+                    used ? Colors.grey.shade400 : const Color(0xFF5A189A),
+                onPressed: used
+                    ? null
+                    : () {
+                        setState(() => _builtPieces.add(piece));
+                        _checkWordBuild(question);
+                      },
+                child: Text(
+                  piece,
+                  style: TextStyle(
+                    fontSize: isBigButtons ? 24 : 20,
+                    fontWeight: FontWeight.w900,
+                    color: used ? Colors.grey : Colors.white,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        if (_builtPieces.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          TextButton.icon(
+            onPressed: () => setState(() => _builtPieces.clear()),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Xếp lại từ đầu'),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Dạng 3: Kéo thả đáp án vào ô trống (Drag & Drop) + hỗ trợ chạm cho bé nhỏ.
+  Widget _buildDragDropArea(Question question, bool isBigButtons) {
+    return Column(
+      children: [
+        DragTarget<int>(
+          onAcceptWithDetails: (details) {
+            final idx = details.data;
+            setState(() => _droppedAnswer = question.options[idx]);
+            if (idx == question.correctIndex) {
+              _onCorrectAnswer(selectedIndex: idx);
+            } else {
+              _onWrongAnswer(selectedIndex: idx);
+              Future<void>.delayed(const Duration(milliseconds: 500), () {
+                if (mounted) setState(() => _droppedAnswer = null);
+              });
+            }
+          },
+          builder: (context, candidateData, rejectedData) {
+            final isHovering = candidateData.isNotEmpty;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              height: 78,
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: isHovering
+                    ? const Color(0xFFD8F3DC)
+                    : (_droppedAnswer != null
+                        ? const Color(0xFFE0FBF8)
+                        : Colors.white),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: isHovering
+                      ? const Color(0xFF2EC4B6)
+                      : const Color(0xFF3A86FF),
+                  width: 3,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  _droppedAnswer ?? '⬇️ Kéo đáp án đúng thả vào đây ⬇️',
+                  style: TextStyle(
+                    fontSize: _droppedAnswer != null ? 24 : 16,
+                    fontWeight: FontWeight.w800,
+                    color: _droppedAnswer != null
+                        ? const Color(0xFF0F766E)
+                        : const Color(0xFF3A86FF),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          alignment: WrapAlignment.center,
+          children: List.generate(question.options.length, (idx) {
+            final label = question.options[idx];
+            final chip = Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFA94D), Color(0xFFFF8C42)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0xFFD16014),
+                    offset: Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: isBigButtons ? 20 : 18,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            );
+
+            return Draggable<int>(
+              data: idx,
+              feedback: Material(
+                color: Colors.transparent,
+                child: Transform.scale(scale: 1.08, child: chip),
+              ),
+              childWhenDragging: Opacity(opacity: 0.35, child: chip),
+              child: GestureDetector(
+                onTap: () {
+                  // Cho phép chạm nhanh nếu bé Lớp 1 khó giữ tay kéo trên màn hình cảm ứng.
+                  setState(() => _droppedAnswer = label);
+                  if (idx == question.correctIndex) {
+                    _onCorrectAnswer(selectedIndex: idx);
+                  } else {
+                    _onWrongAnswer(selectedIndex: idx);
+                    Future<void>.delayed(const Duration(milliseconds: 500), () {
+                      if (mounted) setState(() => _droppedAnswer = null);
+                    });
+                  }
+                },
+                child: chip,
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  /// Dạng 4: Bàn phím số lớn tự điền đáp án.
   Widget _buildNumberPad(bool isBigButtons) {
     final keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', '✓'];
     return Column(
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFF3A86FF), width: 2),
+            border: Border.all(color: const Color(0xFF3A86FF), width: 2.5),
           ),
           child: Text(
-            _typedNumber.isEmpty ? 'Nhập số đáp án...' : _typedNumber,
+            _typedNumber.isEmpty ? 'Bấm số đáp án...' : _typedNumber,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: _typedNumber.isEmpty ? 18 : 28,
@@ -388,14 +689,27 @@ class _QuizScreenState extends State<QuizScreen>
             crossAxisCount: 3,
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
-            childAspectRatio: 2.3,
+            childAspectRatio: 2.35,
           ),
           itemCount: keys.length,
           itemBuilder: (context, idx) {
             final label = keys[idx];
             final isSubmit = label == '✓';
             final isBackspace = label == '⌫';
-            return ElevatedButton(
+            return Tactile3DButton(
+              depth: 4,
+              borderRadius: 16,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              color: isSubmit
+                  ? const Color(0xFF2EC4B6)
+                  : (isBackspace
+                      ? const Color(0xFFFFD8CC)
+                      : Colors.white),
+              shadowColor: isSubmit
+                  ? const Color(0xFF1A8A7F)
+                  : (isBackspace
+                      ? const Color(0xFFE07A5F)
+                      : const Color(0xFFCBD5E1)),
               onPressed: () {
                 if (isSubmit) {
                   _submitTypedNumber();
@@ -410,26 +724,16 @@ class _QuizScreenState extends State<QuizScreen>
                   setState(() => _typedNumber += label);
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isSubmit
-                    ? const Color(0xFF2EC4B6)
-                    : (isBackspace
-                        ? const Color(0xFFFFE5D9)
-                        : Colors.white),
-                foregroundColor: isSubmit
-                    ? Colors.white
-                    : (isBackspace
-                        ? const Color(0xFFD9480F)
-                        : const Color(0xFF1F2937)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
               child: Text(
                 label,
                 style: TextStyle(
                   fontSize: isBigButtons ? 22 : 20,
                   fontWeight: FontWeight.w800,
+                  color: isSubmit
+                      ? Colors.white
+                      : (isBackspace
+                          ? const Color(0xFFD9480F)
+                          : const Color(0xFF1F2937)),
                 ),
               ),
             );

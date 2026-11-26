@@ -44,12 +44,14 @@
 - [x] Màn hình Làm bài (`QuizScreen`) hỗ trợ nút lớn cho trẻ nhỏ, gợi ý nhẹ nhàng khi làm sai, không phạt nặng
 - [x] Khung `AudioGuideService` đọc câu hỏi/hướng dẫn cho trẻ Lớp 1–2
 - [x] Cổng Phụ huynh (`ParentGateDialog`) bảo vệ bằng PIN/phép tính và `ParentDashboardScreen`
-- [x] Nhân vật Cú mèo chuyển động (`AnimatedOwlMascot`: nhún thở, nhảy mừng khi đúng, lắc nhẹ khích lệ khi sai)
+- [x] Nhân vật Cú mèo vẽ khối phong cách hoạt hình 3D (`AnimatedOwlMascot`: đổ bóng khối, chớp mắt, vỗ cánh, nhảy mừng tỏa sao khi đúng, lắc khích lệ khi sai) và nút bấm nổi khối 3D (`Tactile3DButton`)
+- [x] Đa dạng 7 dạng câu hỏi tương tác cho Lớp 1–5: Trắc nghiệm, Đếm hình, So sánh (`> < =`), Đúng/Sai, Tự nhập số bằng bàn phím, Kéo thả (`drag_drop`), và Ghép chữ/Ghép vần (`word_build`)
+- [x] Tùy chỉnh giọng đọc Tiếng Việt trong Cài đặt Phụ huynh (chọn giọng `vi-VN` trên thiết bị, tốc độ nhanh/chậm, ngữ điệu trầm/tươi vui, kiểu hiệu ứng âm thanh, nút Nghe thử trực tiếp)
+- [x] Tối ưu kiến thức Lớp 1 chuẩn GDPT 2018 (ghép vần Tiếng Việt, nhận diện hình học, dãy số, cộng/trừ phạm vi 10–18, TN&XH, đố vui)
 - [x] Hiệu ứng phản hồi khi trả lời (rung nhẹ + gợi ý khi sai, phóng to + đổi màu xanh khi đúng, đếm chuỗi combo `🔥`)
 - [x] Hiệu ứng âm thanh `.wav` (`correct.wav`, `wrong.wav`, `unlock.wav`) kết hợp giọng đọc tiếng Việt (`AudioGuideService`) và nút tắt/bật âm thanh
 - [x] Cho phép phụ huynh sửa trực tiếp Tên, Tuổi, Lớp, Bộ sách, Tuần học, Quỹ giờ và Mã PIN trong `ParentDashboardScreen`
 - [ ] Thu âm hoặc tạo sẵn file MP3 giọng đọc tiếng Việt tự nhiên cho toàn bộ câu hỏi Lớp 1–2 (tránh giọng TTS mặc định bị khô cứng)
-- [ ] Thêm dạng bài kéo-thả, nối hình trực quan
 - [ ] Thêm nhạc nền nhẹ nhàng (có nút tắt/bật)
 - [ ] `[+]` **Cải tiến:** Thêm hệ thống nuôi thú cưng/nhân vật đồng hành và bảng thành tích cho khối Lớp 3–5.
 

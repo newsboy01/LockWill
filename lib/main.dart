@@ -58,6 +58,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
 
   Future<void> _initData() async {
     final profile = await _storage.loadProfile();
+    await _audioGuide.applyProfileSettings(profile);
     var usage = await _storage.loadUsageState(profile);
     final fresh = _escalationEngine.ensureFreshDay(usage, profile);
     if (fresh.dateKey != usage.dateKey) {
@@ -131,8 +132,10 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
         builder: (_) => ParentDashboardScreen(
           profile: _profile,
           usageState: _usageState,
+          audioGuide: _audioGuide,
           onSaveProfile: (updated) async {
             await _storage.saveProfile(updated);
+            await _audioGuide.applyProfileSettings(updated);
             _curriculumService.resetSessionHistory();
             setState(() => _profile = updated);
             await _lockService.startMonitoring(updated.blockedPackages);

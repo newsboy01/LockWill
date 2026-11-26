@@ -15,6 +15,23 @@ enum TextbookSeries {
   }
 }
 
+enum SfxStyle {
+  cheerful('cheerful', 'Vui tươi (Chuông sáng)'),
+  gentle('gentle', 'Nhẹ nhàng (Êm dịu)'),
+  off('off', 'Chỉ đọc giọng nói (Tắt nhạc hiệu ứng)');
+
+  const SfxStyle(this.code, this.displayName);
+  final String code;
+  final String displayName;
+
+  static SfxStyle fromCode(String code) {
+    return SfxStyle.values.firstWhere(
+      (e) => e.code == code,
+      orElse: () => SfxStyle.cheerful,
+    );
+  }
+}
+
 class ChildProfile {
   const ChildProfile({
     required this.name,
@@ -25,6 +42,10 @@ class ChildProfile {
     required this.dailyBaseMinutes,
     required this.dailyMaxMinutes,
     required this.parentPin,
+    this.speechRate = 0.45,
+    this.speechPitch = 1.08,
+    this.voiceName = '',
+    this.sfxStyle = SfxStyle.cheerful,
     this.blockedPackages = const [
       'com.google.android.youtube',
       'com.zhiliaoapp.musically',
@@ -39,6 +60,13 @@ class ChildProfile {
   final int dailyBaseMinutes;
   final int dailyMaxMinutes;
   final String parentPin;
+
+  /// Tùy chỉnh giọng đọc tiếng Việt cho trẻ từ Lớp 1-5.
+  final double speechRate; // 0.25 (rất chậm) .. 0.75 (nhanh)
+  final double speechPitch; // 0.8 (ấm) .. 1.3 (vui tươi)
+  final String voiceName; // Tên giọng vi-VN cụ thể nếu thiết bị hỗ trợ
+  final SfxStyle sfxStyle;
+
   final List<String> blockedPackages;
 
   /// Khối lớp nhỏ (1-2) cần giao diện nút siêu lớn và ưu tiên giọng đọc (Audio-First).
@@ -53,6 +81,10 @@ class ChildProfile {
     int? dailyBaseMinutes,
     int? dailyMaxMinutes,
     String? parentPin,
+    double? speechRate,
+    double? speechPitch,
+    String? voiceName,
+    SfxStyle? sfxStyle,
     List<String>? blockedPackages,
   }) {
     return ChildProfile(
@@ -64,6 +96,10 @@ class ChildProfile {
       dailyBaseMinutes: dailyBaseMinutes ?? this.dailyBaseMinutes,
       dailyMaxMinutes: dailyMaxMinutes ?? this.dailyMaxMinutes,
       parentPin: parentPin ?? this.parentPin,
+      speechRate: speechRate ?? this.speechRate,
+      speechPitch: speechPitch ?? this.speechPitch,
+      voiceName: voiceName ?? this.voiceName,
+      sfxStyle: sfxStyle ?? this.sfxStyle,
       blockedPackages: blockedPackages ?? this.blockedPackages,
     );
   }
@@ -77,6 +113,10 @@ class ChildProfile {
         'dailyBaseMinutes': dailyBaseMinutes,
         'dailyMaxMinutes': dailyMaxMinutes,
         'parentPin': parentPin,
+        'speechRate': speechRate,
+        'speechPitch': speechPitch,
+        'voiceName': voiceName,
+        'sfxStyle': sfxStyle.code,
         'blockedPackages': blockedPackages,
       };
 
@@ -90,6 +130,10 @@ class ChildProfile {
       dailyBaseMinutes: (json['dailyBaseMinutes'] as int?) ?? 30,
       dailyMaxMinutes: (json['dailyMaxMinutes'] as int?) ?? 90,
       parentPin: (json['parentPin'] as String?) ?? '1234',
+      speechRate: ((json['speechRate'] as num?) ?? 0.45).toDouble(),
+      speechPitch: ((json['speechPitch'] as num?) ?? 1.08).toDouble(),
+      voiceName: (json['voiceName'] as String?) ?? '',
+      sfxStyle: SfxStyle.fromCode((json['sfxStyle'] as String?) ?? 'cheerful'),
       blockedPackages: List<String>.from(
         (json['blockedPackages'] as List<dynamic>?) ??
             const ['com.google.android.youtube', 'com.zhiliaoapp.musically'],
