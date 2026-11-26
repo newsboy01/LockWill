@@ -1,0 +1,66 @@
+name: Build LockWill Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/actions-flutter@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Generate Android Gradle files and preserve custom code
+        run: |
+          mkdir -p /tmp/lockwill_backup/kotlin
+          cp pubspec.yaml /tmp/lockwill_backup/
+          cp -r lib /tmp/lockwill_backup/
+          cp -r assets /tmp/lockwill_backup/
+          cp android/app/src/main/AndroidManifest.xml /tmp/lockwill_backup/
+          cp -r android/app/src/main/kotlin/com/lockwill/app /tmp/lockwill_backup/kotlin/
+
+          flutter create . --org com.lockwill --project-name lockwill
+
+          cp /tmp/lockwill_backup/pubspec.yaml .
+          rm -rf lib assets
+          cp -r /tmp/lockwill_backup/lib .
+          cp -r /tmp/lockwill_backup/assets .
+          cp /tmp/lockwill_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+          rm -rf android/app/src/main/kotlin/com/lockwill/lockwill
+          mkdir -p android/app/src/main/kotlin/com/lockwill
+          rm -rf android/app/src/main/kotlin/com/lockwill/app
+          cp -r /tmp/lockwill_backup/kotlin/app android/app/src/main/kotlin/com/lockwill/
+
+          # Đảm bảo namespace và applicationId khớp với com.lockwill.app
+          for gradle_file in android/app/build.gradle android/app/build.gradle.kts; do
+            if [ -f "$gradle_file" ]; then
+              sed -i 's/com\.lockwill\.lockwill/com.lockwill.app/g' "$gradle_file"
+            fi
+          done
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lockwill-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
