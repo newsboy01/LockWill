@@ -19,6 +19,7 @@
 - [x] Dựng khung project Flutter (`pubspec.yaml`, cấu trúc `lib/core`, `lib/features`)
 - [x] Thiết kế lớp trừu tượng `DeviceLockService` qua `MethodChannel` để tách biệt phần khóa OS (Android Kotlin hiện tại / iOS Swift tương lai)
 - [x] Tạo GitHub Actions workflow `.github/workflows/build_apk.yml` để build APK tự động trên Cloud (không cần cài Android Studio trên máy)
+- [x] Tạo GitHub Actions workflow `.github/workflows/build_web.yml` để xuất bản bản Web Demo lên GitHub Pages (`0 MB` cài đặt)
 - [ ] `[!]` **Cần đẩy lên GitHub:** Tạo repo GitHub và push code để GitHub Actions xuất file `app-release.apk` (hoặc cài Flutter/Android SDK nếu muốn build offline).
 
 ## Giai đoạn 2: Cơ chế Khóa Thiết bị & Đếm Giờ (Android Native)

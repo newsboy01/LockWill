@@ -1,0 +1,56 @@
+name: Deploy LockWill Web Demo
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        run: |
+          git clone https://github.com/flutter/flutter.git -b stable --depth 1 "$HOME/flutter"
+          echo "$HOME/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Generate Web runner files
+        run: |
+          rm -rf /tmp/lockwill_web
+          flutter create /tmp/lockwill_web --org com.lockwill --project-name lockwill --platforms=web
+          rm -rf web
+          cp -r /tmp/lockwill_web/web ./web
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web Release
+        run: flutter build web --release --base-href "/LockWill/"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
