@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T17:40:12.157686",
+  "updatedAt": "2026-11-26T17:41:36.889949",
   "deviceMonitors": [
     {
       "deviceKey": "Will_OPPO_CPH2781",
@@ -11,15 +11,15 @@
       "deviceModel": "CPH2781",
       "osVersion": "Android 16 (SDK 36)",
       "currentApp": "LockWill",
-      "lastSeenAt": "2026-11-26T17:40:10",
-      "remainingSeconds": 996,
+      "lastSeenAt": "2026-11-26T17:41:35",
+      "remainingSeconds": 1296,
       "apps": [
         {
           "packageName": "com.lockwill.app",
           "appName": "LockWill",
-          "seconds": 283,
+          "seconds": 339,
           "isBlockedApp": false,
-          "lastUsedAt": "2026-11-26T17:40:10"
+          "lastUsedAt": "2026-11-26T17:41:35"
         },
         {
           "packageName": "com.android.launcher",
@@ -195,6 +195,128 @@
     }
   ],
   "sessions": [
+    {
+      "id": "sess_1795689696024",
+      "timestamp": "2026-11-26T17:41:36.024647",
+      "childName": "Will",
+      "age": 6,
+      "grade": 1,
+      "textbook": "Kết nối tri thức với cuộc sống",
+      "location": "Cam Ranh, Khánh Hoà",
+      "deviceBrand": "OPPO",
+      "deviceModel": "CPH2781",
+      "osVersion": "Android 16 (SDK 36)",
+      "totalQuestions": 7,
+      "firstTryCorrect": 6,
+      "wrongAttempts": 1,
+      "rewardMinutes": 5,
+      "subjectBreakdown": {
+        "Tiếng Việt": {
+          "correct": 1,
+          "wrong": 1
+        },
+        "Toán": {
+          "correct": 4,
+          "wrong": 0
+        },
+        "Tiếng Anh Lớp 1": {
+          "correct": 1,
+          "wrong": 0
+        }
+      },
+      "appUsageSnapshot": {
+        "date": "2026-11-26",
+        "remainingSeconds": 1296,
+        "currentApp": "LockWill",
+        "currentAppUpdatedAt": "2026-11-26T17:41:35",
+        "apps": [
+          {
+            "packageName": "com.lockwill.app",
+            "appName": "LockWill",
+            "seconds": 339,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:41:35"
+          },
+          {
+            "packageName": "com.android.launcher",
+            "appName": "Trình khởi tạo hệ thống",
+            "seconds": 55,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:30:34"
+          },
+          {
+            "packageName": "com.ss.android.ugc.trill",
+            "appName": "TikTok",
+            "seconds": 199,
+            "isBlockedApp": true,
+            "lastUsedAt": "2026-11-26T17:35:31"
+          },
+          {
+            "packageName": "com.google.android.youtube",
+            "appName": "YouTube",
+            "seconds": 157,
+            "isBlockedApp": true,
+            "lastUsedAt": "2026-11-26T17:30:31"
+          },
+          {
+            "packageName": "com.fpt.chat",
+            "appName": "FPT Chat",
+            "seconds": 13,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:11:52"
+          },
+          {
+            "packageName": "com.google.android.gms",
+            "appName": "Dịch vụ Google Play",
+            "seconds": 4,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:32:25"
+          },
+          {
+            "packageName": "com.google.android.permissioncontroller",
+            "appName": "Trình điều khiển quyền",
+            "seconds": 8,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:33:21"
+          },
+          {
+            "packageName": "com.heytap.market",
+            "appName": "App Market",
+            "seconds": 9,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:34:43"
+          },
+          {
+            "packageName": "android",
+            "appName": "Hệ thống Android",
+            "seconds": 2,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:36:07"
+          },
+          {
+            "packageName": "com.google.android.packageinstaller",
+            "appName": "Trình cài đặt gói",
+            "seconds": 4,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:36:28"
+          },
+          {
+            "packageName": "com.android.settings",
+            "appName": "Cài đặt",
+            "seconds": 2,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:36:12"
+          },
+          {
+            "packageName": "com.android.vending",
+            "appName": "Cửa hàng Google Play",
+            "seconds": 8,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:36:27"
+          }
+        ]
+      }
+    },
     {
       "id": "sess_1795689611184",
       "timestamp": "2026-11-26T17:40:11.184577",
