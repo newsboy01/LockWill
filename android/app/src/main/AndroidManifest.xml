@@ -2,17 +2,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.lockwill.app">
 
-    <!-- Theo dõi thời gian sử dụng app giải trí -->
+    <!-- Theo dõi app đang mở trên màn hình -->
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
-    <!-- Hiển thị màn hình khóa đè lên app bị chặn khi hết giờ -->
+    <!-- Đưa màn hình khóa LockWill đè lên app bị chặn -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <!-- Chạy dịch vụ đếm giờ ổn định dưới nền -->
+    <!-- Chạy dịch vụ giám sát bền bỉ dưới nền -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Tự khởi động lại dịch vụ giám sát khi máy reboot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Liệt kê các ứng dụng/game đã cài để phụ huynh tích chọn khóa -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <application
         android:label="LockWill"
@@ -40,7 +45,20 @@
             android:name=".UsageMonitorService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="parental_control_app_lock" />
+        </service>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <meta-data
             android:name="flutterEmbedding"

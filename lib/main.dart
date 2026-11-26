@@ -64,6 +64,12 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
     // Tự động kiểm tra và cập nhật bộ câu hỏi mới nhất từ GitHub chạy nền.
     _curriculumService.syncQuestionsFromGitHub(profile.githubRepo);
 
+    // Nếu đã cấp quyền Android, tự động kích hoạt dịch vụ giám sát & khóa app ngay khi mở máy.
+    final hasPerm = await _lockService.hasRequiredPermissions();
+    if (hasPerm && profile.blockedPackages.isNotEmpty) {
+      await _lockService.startMonitoring(profile.blockedPackages);
+    }
+
     var usage = await _storage.loadUsageState(profile);
     final fresh = _escalationEngine.ensureFreshDay(usage, profile);
     if (fresh.dateKey != usage.dateKey) {
@@ -152,6 +158,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
           profile: _profile,
           usageState: _usageState,
           audioGuide: _audioGuide,
+          deviceLockService: _lockService,
           onSaveProfile: (updated) async {
             await _storage.saveProfile(updated);
             await _audioGuide.applyProfileSettings(updated);
@@ -160,6 +167,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
             await _lockService.startMonitoring(updated.blockedPackages);
           },
           onSimulateTimeUp: () async {
+            await _lockService.lockDeviceApps();
             final updated = _usageState.copyWith(
               usedMinutes: _usageState.grantedMinutes,
             );

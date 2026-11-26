@@ -23,10 +23,10 @@
 - [ ] `[!]` **Cần đẩy lên GitHub:** Tạo repo GitHub và push code để GitHub Actions xuất file `app-release.apk` (hoặc cài Flutter/Android SDK nếu muốn build offline).
 
 ## Giai đoạn 2: Cơ chế Khóa Thiết bị & Đếm Giờ (Android Native)
-- [x] Khai báo quyền trong `AndroidManifest.xml` (`PACKAGE_USAGE_STATS`, `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE`, `RECEIVE_BOOT_COMPLETED`)
-- [x] Tạo khung `MainActivity.kt`, `UsageMonitorService.kt`, `LockOverlayManager.kt`
-- [ ] Hoàn thiện logic đọc `UsageStatsManager` theo thời gian thực (tách biệt app Whitelist vs app Giải trí bị giám sát)
-- [ ] Hoàn thiện màn hình hướng dẫn phụ huynh cấp quyền đặc biệt trên Android (Usage Access, Display over other apps, Battery Optimization)
+- [x] Khai báo đầy đủ quyền trong `AndroidManifest.xml` (`PACKAGE_USAGE_STATS`, `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE_SPECIAL_USE`, `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `QUERY_ALL_PACKAGES`)
+- [x] Hoàn thiện `UsageMonitorService.kt` chạy Foreground Service bền bỉ (có Notification hiển thị trạng thái khóa/phút còn lại, lưu trạng thái xuống `SharedPreferences`, dùng `UsageEvents` phát hiện chuyển app theo thời gian thực)
+- [x] Thêm `BootReceiver.kt` tự khởi chạy lại dịch vụ giám sát khi khởi động lại điện thoại/tablet
+- [x] Thêm tính năng liệt kê toàn bộ App đã cài trên máy (`MainActivity.kt` → `getInstalledApps`) và hộp thoại **Chọn App bị khóa** trong `ParentDashboardScreen`
 - [ ] `[!]` **Cần xử lý đặc thù hãng máy:** Xiaomi (MIUI/HyperOS), Oppo (ColorOS), Samsung hay tự tắt Foreground Service chạy ngầm — cần thêm hướng dẫn tắt tối ưu pin & `DeviceAdminReceiver` chống trẻ tự gỡ app.
 - [ ] `[+]` **Cải tiến tương lai (iOS):** Xin quyền Apple `FamilyControls` entitlement và viết Swift plugin tương thích `DeviceLockService`.
 

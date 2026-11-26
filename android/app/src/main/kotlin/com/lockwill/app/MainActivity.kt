@@ -1,8 +1,10 @@
 package com.lockwill.app
 
+import android.Manifest
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Process
@@ -29,6 +31,7 @@ class MainActivity : FlutterActivity() {
                     }
                     "startMonitoring" -> {
                         val packages = call.argument<List<String>>("blockedPackages") ?: emptyList()
+                        UsageMonitorService.saveBlockedPackages(this, packages)
                         val intent = Intent(this, UsageMonitorService::class.java).apply {
                             putStringArrayListExtra("blockedPackages", ArrayList(packages))
                         }
@@ -44,13 +47,17 @@ class MainActivity : FlutterActivity() {
                         result.success(null)
                     }
                     "lockDeviceApps" -> {
+                        UsageMonitorService.lockNow(this)
                         LockOverlayManager.bringLockScreenToFront(this)
                         result.success(null)
                     }
                     "unlockForMinutes" -> {
                         val minutes = call.argument<Int>("minutes") ?: 15
-                        UsageMonitorService.grantMinutes(minutes)
+                        UsageMonitorService.grantMinutes(this, minutes)
                         result.success(null)
+                    }
+                    "getInstalledApps" -> {
+                        result.success(queryLaunchableApps())
                     }
                     "getDeviceInfo" -> {
                         val info = mapOf(
@@ -66,6 +73,26 @@ class MainActivity : FlutterActivity() {
             }
     }
 
+    private fun queryLaunchableApps(): List<Map<String, String>> {
+        val pm = packageManager
+        val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val resolveInfos = pm.queryIntentActivities(mainIntent, 0)
+        val seen = HashSet<String>()
+        val apps = ArrayList<Map<String, String>>()
+
+        for (ri in resolveInfos) {
+            val pkg = ri.activityInfo.packageName
+            if (pkg == packageName || seen.contains(pkg)) continue
+            seen.add(pkg)
+            val label = ri.loadLabel(pm)?.toString() ?: pkg
+            apps.add(mapOf("packageName" to pkg, "appName" to label))
+        }
+        apps.sortBy { it["appName"]?.lowercase() }
+        return apps
+    }
+
     private fun hasUsageStatsPermission(): Boolean {
         val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
         val mode = appOps.unsafeCheckOpNoThrow(
@@ -77,6 +104,11 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun requestMissingPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 2001)
+            }
+        }
         if (!hasUsageStatsPermission()) {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             return

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/models/child_profile.dart';
 import '../../core/models/daily_usage_state.dart';
+import '../../core/platform/device_lock_service.dart';
 import '../../core/services/audio_guide_service.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
@@ -9,6 +10,7 @@ class ParentDashboardScreen extends StatefulWidget {
     required this.profile,
     required this.usageState,
     required this.audioGuide,
+    required this.deviceLockService,
     required this.onSaveProfile,
     required this.onSimulateTimeUp,
     required this.onRequestPermissions,
@@ -18,6 +20,7 @@ class ParentDashboardScreen extends StatefulWidget {
   final ChildProfile profile;
   final DailyUsageState usageState;
   final AudioGuideService audioGuide;
+  final DeviceLockService deviceLockService;
   final ValueChanged<ChildProfile> onSaveProfile;
   final VoidCallback onSimulateTimeUp;
   final VoidCallback onRequestPermissions;
@@ -47,6 +50,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   late SfxStyle _sfxStyle;
   List<VoiceOption> _availableVoices = const [];
 
+  // Danh sách ứng dụng bị khóa trên máy
+  late Set<String> _blockedPackages;
+  List<InstalledAppInfo> _installedApps = const [];
+  bool _hasPermissions = false;
+
   @override
   void initState() {
     super.initState();
@@ -67,7 +75,93 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     _speechPitch = widget.profile.speechPitch;
     _voiceName = widget.profile.voiceName;
     _sfxStyle = widget.profile.sfxStyle;
+    _blockedPackages = widget.profile.blockedPackages.toSet();
     _loadVoices();
+    _loadDeviceAppsAndPermissions();
+  }
+
+  Future<void> _loadDeviceAppsAndPermissions() async {
+    final perm = await widget.deviceLockService.hasRequiredPermissions();
+    final apps = await widget.deviceLockService.getInstalledApps();
+    if (!mounted) return;
+    setState(() {
+      _hasPermissions = perm;
+      _installedApps = apps;
+    });
+  }
+
+  Future<void> _openAppPickerDialog() async {
+    var query = '';
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            final filtered = _installedApps
+                .where((a) =>
+                    a.appName.toLowerCase().contains(query.toLowerCase()) ||
+                    a.packageName.toLowerCase().contains(query.toLowerCase()))
+                .toList();
+            return AlertDialog(
+              title: Text('Chọn App bị khóa (${_blockedPackages.length})'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 380,
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Tìm YouTube, TikTok, Game...',
+                        prefixIcon: Icon(Icons.search),
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (v) => setModalState(() => query = v),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (_, idx) {
+                          final app = filtered[idx];
+                          final checked =
+                              _blockedPackages.contains(app.packageName);
+                          return CheckboxListTile(
+                            dense: true,
+                            value: checked,
+                            title: Text(app.appName),
+                            subtitle: Text(
+                              app.packageName,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            onChanged: (v) {
+                              setModalState(() {
+                                if (v == true) {
+                                  _blockedPackages.add(app.packageName);
+                                } else {
+                                  _blockedPackages.remove(app.packageName);
+                                }
+                              });
+                              setState(() {});
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Xong'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _loadVoices() async {
@@ -139,14 +233,35 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     runSpacing: 8,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: widget.onRequestPermissions,
-                        icon: const Icon(Icons.security_rounded),
-                        label: const Text('Cấp quyền khóa Android'),
+                        onPressed: () {
+                          widget.onRequestPermissions();
+                          Future<void>.delayed(
+                            const Duration(seconds: 2),
+                            _loadDeviceAppsAndPermissions,
+                          );
+                        },
+                        icon: Icon(
+                          _hasPermissions
+                              ? Icons.verified_user_rounded
+                              : Icons.security_rounded,
+                        ),
+                        label: Text(
+                          _hasPermissions
+                              ? 'Đã cấp quyền khóa Android ✅'
+                              : 'Cấp quyền khóa Android',
+                        ),
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: _openAppPickerDialog,
+                        icon: const Icon(Icons.apps_rounded),
+                        label: Text(
+                          'Chọn App bị khóa (${_blockedPackages.length})',
+                        ),
                       ),
                       FilledButton.tonalIcon(
                         onPressed: widget.onSimulateTimeUp,
                         icon: const Icon(Icons.lock_clock_rounded),
-                        label: const Text('Test màn hình hết giờ'),
+                        label: const Text('Khóa ngay (Test hết giờ)'),
                       ),
                     ],
                   ),
@@ -429,6 +544,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   githubRepo:
                       cleanRepo.isEmpty ? 'newsboy01/LockWill' : cleanRepo,
                   githubToken: _githubTokenController.text.trim(),
+                  blockedPackages: _blockedPackages.toList(),
                 ),
               );
               Navigator.of(context).pop();
