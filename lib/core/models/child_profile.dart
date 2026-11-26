@@ -42,6 +42,9 @@ class ChildProfile {
     required this.dailyBaseMinutes,
     required this.dailyMaxMinutes,
     required this.parentPin,
+    this.parentName = 'Phụ huynh',
+    this.extensionMinutes = 15,
+    this.baseQuestions = 5,
     this.speechRate = 0.45,
     this.speechPitch = 1.08,
     this.voiceName = '',
@@ -64,28 +67,31 @@ class ChildProfile {
   final TextbookSeries textbook;
   final int currentWeek; // 1..35
   final int dailyBaseMinutes;
-  final int dailyMaxMinutes;
+  final int dailyMaxMinutes; // Mở rộng lên tới 480 phút/ngày
   final String parentPin;
+  final String parentName;
+
+  /// Tùy chỉnh thời lượng mỗi lần gia hạn và số câu hỏi cơ bản tương ứng.
+  final int extensionMinutes; // 5, 10, 15, 20, 30
+  final int baseQuestions; // 3..15
 
   /// Tùy chỉnh giọng đọc tiếng Việt cho trẻ từ Lớp 1-5.
-  final double speechRate; // 0.25 (rất chậm) .. 0.75 (nhanh)
-  final double speechPitch; // 0.8 (ấm) .. 1.3 (vui tươi)
-  final String voiceName; // Tên giọng vi-VN cụ thể nếu thiết bị hỗ trợ
+  final double speechRate; // 0.25 .. 0.75
+  final double speechPitch; // 0.8 .. 1.3
+  final String voiceName;
   final SfxStyle sfxStyle;
 
-  /// Thông tin vị trí và đồng bộ GitHub để phân loại hồ sơ bé giữa các gia đình.
   final String location;
   final String githubRepo;
   final String githubToken;
 
-  /// Gamification: tích sao đổi phụ kiện Cú mèo 3D và nhạc nền dịu nhẹ.
+  /// Gamification
   final int stars;
   final String owlAccessory; // none | grad_cap | glasses | crown
   final bool bgmEnabled;
 
   final List<String> blockedPackages;
 
-  /// Khối lớp nhỏ (1-2) cần giao diện nút siêu lớn và ưu tiên giọng đọc (Audio-First).
   bool get isAudioFirstGrade => grade <= 2;
 
   ChildProfile copyWith({
@@ -97,6 +103,9 @@ class ChildProfile {
     int? dailyBaseMinutes,
     int? dailyMaxMinutes,
     String? parentPin,
+    String? parentName,
+    int? extensionMinutes,
+    int? baseQuestions,
     double? speechRate,
     double? speechPitch,
     String? voiceName,
@@ -118,6 +127,9 @@ class ChildProfile {
       dailyBaseMinutes: dailyBaseMinutes ?? this.dailyBaseMinutes,
       dailyMaxMinutes: dailyMaxMinutes ?? this.dailyMaxMinutes,
       parentPin: parentPin ?? this.parentPin,
+      parentName: parentName ?? this.parentName,
+      extensionMinutes: extensionMinutes ?? this.extensionMinutes,
+      baseQuestions: baseQuestions ?? this.baseQuestions,
       speechRate: speechRate ?? this.speechRate,
       speechPitch: speechPitch ?? this.speechPitch,
       voiceName: voiceName ?? this.voiceName,
@@ -141,6 +153,9 @@ class ChildProfile {
         'dailyBaseMinutes': dailyBaseMinutes,
         'dailyMaxMinutes': dailyMaxMinutes,
         'parentPin': parentPin,
+        'parentName': parentName,
+        'extensionMinutes': extensionMinutes,
+        'baseQuestions': baseQuestions,
         'speechRate': speechRate,
         'speechPitch': speechPitch,
         'voiceName': voiceName,
@@ -162,8 +177,11 @@ class ChildProfile {
       textbook: TextbookSeries.fromCode((json['textbook'] as String?) ?? ''),
       currentWeek: (json['currentWeek'] as int?) ?? 12,
       dailyBaseMinutes: (json['dailyBaseMinutes'] as int?) ?? 30,
-      dailyMaxMinutes: (json['dailyMaxMinutes'] as int?) ?? 90,
+      dailyMaxMinutes: (json['dailyMaxMinutes'] as int?) ?? 240,
       parentPin: (json['parentPin'] as String?) ?? '1234',
+      parentName: (json['parentName'] as String?) ?? 'Phụ huynh',
+      extensionMinutes: (json['extensionMinutes'] as int?) ?? 15,
+      baseQuestions: (json['baseQuestions'] as int?) ?? 5,
       speechRate: ((json['speechRate'] as num?) ?? 0.45).toDouble(),
       speechPitch: ((json['speechPitch'] as num?) ?? 1.08).toDouble(),
       voiceName: (json['voiceName'] as String?) ?? '',

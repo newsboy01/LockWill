@@ -51,6 +51,10 @@
 - [x] Màn hình Làm bài (`QuizScreen`) hỗ trợ nút lớn cho trẻ nhỏ, gợi ý nhẹ nhàng khi làm sai, không phạt nặng
 - [x] Khung `AudioGuideService` đọc câu hỏi/hướng dẫn cho trẻ Lớp 1–2
 - [x] Cổng Phụ huynh (`ParentGateDialog`) bảo vệ bằng PIN/phép tính và `ParentDashboardScreen`
+- [x] Màn hình Thiết lập Lần Đầu (`OnboardingScreen`) khi mới cài app: nhập Tên bé, Tuổi, Kiến thức Lớp, Bộ sách, Tên Bố/Mẹ giám sát, Vị trí, Mã PIN để chọn lọc thư viện câu hỏi ngay từ đầu
+- [x] Mở rộng giới hạn trần tối đa mỗi ngày lên **480 phút (8 giờ)** và cho phép tùy chỉnh thời lượng mỗi lần gia hạn (`5–30 phút`) + số câu hỏi cơ bản tự động tỷ lệ theo thời lượng và tăng tiến dần theo lượt (giữ chuẩn kiến thức lớp hiện tại)
+- [x] Tập trung mở rộng đa dạng kiến thức **Lớp 1** (Tiếng Việt ghép vần & chính tả `c/k`, `g/gh`; Tiếng Anh Lớp 1 màu sắc/con vật/số đếm/đồ dùng/chào hỏi; Toán lời văn/hình học/xem giờ/lịch tuần; TN&XH; Đạo đức; Đố vui)
+- [x] Sửa lỗi CI build trên Ubuntu 24.04 (tạo sẵn bộ icon PNG đa kích thước `assets/icon/resized/ic_*.png` thay cho lệnh `convert`)
 - [x] Thiết kế lại App Icon 3D (`assets/icon/app_icon.png`) và tự động tạo đầy đủ icon launcher Android (`mipmap-mdpi..xxxhdpi`) & Web (`favicon.png`, `Icon-192/512`) trong CI
 - [x] Nhân vật Cú mèo vẽ khối phong cách hoạt hình 3D (`AnimatedOwlMascot`: đổ bóng khối, chớp mắt, vỗ cánh, nhảy mừng tỏa sao khi đúng, lắc khích lệ khi sai) và nút bấm nổi khối 3D (`Tactile3DButton`)
 - [x] Đa dạng 7 dạng câu hỏi tương tác cho Lớp 1–5: Trắc nghiệm, Đếm hình, So sánh (`> < =`), Đúng/Sai, Tự nhập số bằng bàn phím, Kéo thả (`drag_drop`), và Ghép chữ/Ghép vần (`word_build`)

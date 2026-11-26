@@ -19,15 +19,14 @@ class ExtensionChallenge {
   final bool isDailyCapReached;
 }
 
-/// Quản lý cơ chế tăng dần số lượng & độ khó bài tập trong 1 ngày,
-/// và tự động reset về trạng thái ban đầu khi sang ngày mới.
+/// Quản lý cơ chế tăng dần số lượng & độ khó bài tập trong 1 ngày (theo tùy chỉnh phụ huynh),
+/// luôn giữ kiến thức trong phạm vi chương trình lớp hiện tại và tự reset lúc 00:00.
 class EscalationEngine {
   static String todayKey([DateTime? now]) {
     final dt = now ?? DateTime.now();
     return DateFormat('yyyy-MM-dd').format(dt);
   }
 
-  /// Nếu đã sang ngày mới, trả về state mới với quỹ thời gian mặc định.
   DailyUsageState ensureFreshDay(
     DailyUsageState current,
     ChildProfile profile, {
@@ -45,7 +44,9 @@ class EscalationEngine {
     );
   }
 
-  /// Tính yêu cầu bài tập cho lượt xin thêm giờ tiếp theo trong ngày.
+  /// Tính số câu hỏi và độ khó cho lượt gia hạn tiếp theo:
+  /// - Tỷ lệ theo thời lượng gia hạn (`extensionMinutes`) phụ huynh chọn: càng nhiều phút càng nhiều câu.
+  /// - Mỗi lượt gia hạn tiếp theo trong ngày cộng thêm +2 câu và nâng độ khó dần (Dễ -> TB -> Khá trong lớp).
   ExtensionChallenge nextChallenge(
     DailyUsageState state,
     ChildProfile profile,
@@ -62,31 +63,25 @@ class EscalationEngine {
     }
 
     final turn = state.extensionCountToday + 1;
-    if (turn == 1) {
-      return ExtensionChallenge(
-        turnNumber: 1,
-        questionCount: 5,
-        rewardMinutes: remainingCap >= 15 ? 15 : remainingCap,
-        targetDifficulty: QuestionDifficulty.easy,
-        isDailyCapReached: false,
-      );
-    } else if (turn == 2) {
-      return ExtensionChallenge(
-        turnNumber: 2,
-        questionCount: 8,
-        rewardMinutes: remainingCap >= 15 ? 15 : remainingCap,
-        targetDifficulty: QuestionDifficulty.medium,
-        isDailyCapReached: false,
-      );
-    } else {
-      final extraQuestions = 10 + (turn - 3) * 2;
-      return ExtensionChallenge(
-        turnNumber: turn,
-        questionCount: extraQuestions,
-        rewardMinutes: remainingCap >= 10 ? 10 : remainingCap,
-        targetDifficulty: QuestionDifficulty.hard,
-        isDailyCapReached: false,
-      );
-    }
+    final desiredReward = profile.extensionMinutes.clamp(5, 60);
+    final reward = remainingCap >= desiredReward ? desiredReward : remainingCap;
+
+    // Quy đổi số câu cơ bản tỷ lệ với thời lượng gia hạn (chuẩn theo mốc 15 phút)
+    final scaledBase =
+        ((profile.baseQuestions * reward) / 15.0).round().clamp(3, 25);
+    // Càng xin thêm nhiều lần trong ngày, số câu tăng thêm (+2 câu mỗi lượt)
+    final totalQuestions = (scaledBase + (turn - 1) * 2).clamp(3, 30);
+
+    final difficulty = turn == 1
+        ? QuestionDifficulty.easy
+        : (turn == 2 ? QuestionDifficulty.medium : QuestionDifficulty.hard);
+
+    return ExtensionChallenge(
+      turnNumber: turn,
+      questionCount: totalQuestions,
+      rewardMinutes: reward,
+      targetDifficulty: difficulty,
+      isDailyCapReached: false,
+    );
   }
 }

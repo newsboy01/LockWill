@@ -8,6 +8,17 @@ import 'escalation_engine.dart';
 class StorageService {
   static const _profileKey = 'lockwill_child_profile_v1';
   static const _usageKey = 'lockwill_daily_usage_v1';
+  static const _onboardingKey = 'lockwill_onboarding_done_v1';
+
+  Future<bool> hasCompletedOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_onboardingKey) ?? false;
+  }
+
+  Future<void> markOnboardingCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingKey, true);
+  }
 
   Future<ChildProfile> loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
@@ -20,8 +31,11 @@ class StorageService {
         textbook: TextbookSeries.ketNoiTriThuc,
         currentWeek: CurriculumService.estimateCurrentSchoolWeek(),
         dailyBaseMinutes: 30,
-        dailyMaxMinutes: 90,
+        dailyMaxMinutes: 240,
         parentPin: '1234',
+        parentName: 'Bố/Mẹ',
+        extensionMinutes: 15,
+        baseQuestions: 5,
       );
     }
     return ChildProfile.fromJson(jsonDecode(raw) as Map<String, dynamic>);

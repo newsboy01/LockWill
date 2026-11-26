@@ -34,6 +34,7 @@ class ParentDashboardScreen extends StatefulWidget {
 
 class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   late final TextEditingController _nameController;
+  late final TextEditingController _parentNameController;
   late final TextEditingController _pinController;
   late final TextEditingController _locationController;
   late final TextEditingController _githubRepoController;
@@ -44,6 +45,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   late int _week;
   late int _baseMinutes;
   late int _maxMinutes;
+  late int _extensionMinutes;
+  late int _baseQuestions;
 
   // Tùy chỉnh giọng đọc & âm thanh tiếng Việt
   late double _speechRate;
@@ -62,6 +65,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.profile.name);
+    _parentNameController =
+        TextEditingController(text: widget.profile.parentName);
     _pinController = TextEditingController(text: widget.profile.parentPin);
     _locationController = TextEditingController(text: widget.profile.location);
     _githubRepoController =
@@ -74,6 +79,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     _week = widget.profile.currentWeek;
     _baseMinutes = widget.profile.dailyBaseMinutes;
     _maxMinutes = widget.profile.dailyMaxMinutes;
+    _extensionMinutes = widget.profile.extensionMinutes;
+    _baseQuestions = widget.profile.baseQuestions;
     _speechRate = widget.profile.speechRate;
     _speechPitch = widget.profile.speechPitch;
     _voiceName = widget.profile.voiceName;
@@ -184,6 +191,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _parentNameController.dispose();
     _pinController.dispose();
     _locationController.dispose();
     _githubRepoController.dispose();
@@ -310,6 +318,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             decoration: const InputDecoration(
               labelText: 'Tên gọi của bé',
               prefixIcon: Icon(Icons.child_care_rounded),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _parentNameController,
+            decoration: const InputDecoration(
+              labelText: 'Tên Bố/Mẹ giám sát',
+              prefixIcon: Icon(Icons.supervisor_account_rounded),
               border: OutlineInputBorder(),
             ),
           ),
@@ -472,27 +489,58 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
           const Divider(height: 30),
           const Text(
-            '3. Thời gian sử dụng & Bảo mật',
+            '3. Thời gian sử dụng, Bậc thang Gia hạn & Bảo mật',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text('Quỹ thời gian mặc định đầu ngày: $_baseMinutes phút'),
           Slider(
-            value: _baseMinutes.toDouble(),
-            min: 15,
-            max: 60,
-            divisions: 9,
+            value: _baseMinutes.toDouble().clamp(10, 90),
+            min: 10,
+            max: 90,
+            divisions: 16,
             label: '$_baseMinutes phút',
             onChanged: (v) => setState(() => _baseMinutes = v.round()),
           ),
-          Text('Giới hạn trần tối đa mỗi ngày: $_maxMinutes phút'),
+          Text('Giới hạn trần tối đa mỗi ngày: $_maxMinutes phút (${(_maxMinutes / 60).toStringAsFixed(1)} giờ)'),
           Slider(
-            value: _maxMinutes.toDouble(),
-            min: 45,
-            max: 150,
-            divisions: 7,
+            value: _maxMinutes.toDouble().clamp(60, 480),
+            min: 60,
+            max: 480,
+            divisions: 14,
             label: '$_maxMinutes phút',
             onChanged: (v) => setState(() => _maxMinutes = v.round()),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<int>(
+            value: [5, 10, 15, 20, 30].contains(_extensionMinutes)
+                ? _extensionMinutes
+                : 15,
+            decoration: const InputDecoration(
+              labelText: 'Thời lượng mỗi lần gia hạn thêm',
+              prefixIcon: Icon(Icons.more_time_rounded),
+              border: OutlineInputBorder(),
+            ),
+            items: [5, 10, 15, 20, 30]
+                .map((m) => DropdownMenuItem(
+                      value: m,
+                      child: Text('+$m phút mỗi lần làm bài'),
+                    ))
+                .toList(),
+            onChanged: (v) => setState(() => _extensionMinutes = v ?? 15),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Số câu hỏi chuẩn (mốc 15 phút): $_baseQuestions câu → Lượt 1 (+$_extensionMinutes phút) cần ${((_baseQuestions * _extensionMinutes) / 15.0).round().clamp(3, 25)} câu, các lượt sau +2 câu & tăng dần độ khó trong lớp $_grade.',
+            style: const TextStyle(fontSize: 13),
+          ),
+          Slider(
+            value: _baseQuestions.toDouble().clamp(3, 15),
+            min: 3,
+            max: 15,
+            divisions: 12,
+            label: '$_baseQuestions câu',
+            onChanged: (v) => setState(() => _baseQuestions = v.round()),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -576,18 +624,22 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           FilledButton.icon(
             onPressed: () {
               final cleanName = _nameController.text.trim();
+              final cleanParent = _parentNameController.text.trim();
               final cleanPin = _pinController.text.trim();
               final cleanLocation = _locationController.text.trim();
               final cleanRepo = _githubRepoController.text.trim();
               widget.onSaveProfile(
                 widget.profile.copyWith(
                   name: cleanName.isEmpty ? 'Bé' : cleanName,
+                  parentName: cleanParent.isEmpty ? 'Phụ huynh' : cleanParent,
                   age: _age,
                   grade: _grade,
                   textbook: _textbook,
                   currentWeek: _week,
                   dailyBaseMinutes: _baseMinutes,
                   dailyMaxMinutes: _maxMinutes,
+                  extensionMinutes: _extensionMinutes,
+                  baseQuestions: _baseQuestions,
                   parentPin: cleanPin.isEmpty ? '1234' : cleanPin,
                   speechRate: _speechRate,
                   speechPitch: _speechPitch,

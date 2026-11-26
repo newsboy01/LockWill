@@ -8,6 +8,7 @@ import 'core/services/escalation_engine.dart';
 import 'core/services/learning_report_service.dart';
 import 'core/services/storage_service.dart';
 import 'features/lock_screen/lock_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
 import 'features/parent/parent_dashboard_screen.dart';
 import 'features/parent/parent_gate_dialog.dart';
 import 'features/quiz/quiz_screen.dart';
@@ -49,6 +50,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
   final LearningReportService _reportService = LearningReportService();
 
   bool _loaded = false;
+  bool _needsOnboarding = false;
   late ChildProfile _profile;
   late DailyUsageState _usageState;
 
@@ -59,6 +61,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
   }
 
   Future<void> _initData() async {
+    final onboarded = await _storage.hasCompletedOnboarding();
     final profile = await _storage.loadProfile();
     await _audioGuide.applyProfileSettings(profile);
     await _audioGuide.setBgmEnabled(profile.bgmEnabled);
@@ -82,6 +85,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
     setState(() {
       _profile = profile;
       _usageState = usage;
+      _needsOnboarding = !onboarded;
       _loaded = true;
     });
   }
@@ -210,6 +214,22 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
       return const Scaffold(
         backgroundColor: Color(0xFFFFF8EE),
         body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_needsOnboarding) {
+      return OnboardingScreen(
+        initialProfile: _profile,
+        onCompleted: (configuredProfile) async {
+          await _storage.saveProfile(configuredProfile);
+          await _storage.markOnboardingCompleted();
+          await _audioGuide.applyProfileSettings(configuredProfile);
+          _curriculumService.resetSessionHistory();
+          setState(() {
+            _profile = configuredProfile;
+            _needsOnboarding = false;
+          });
+        },
       );
     }
 
