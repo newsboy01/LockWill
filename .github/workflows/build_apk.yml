@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -68,10 +71,29 @@ jobs:
         run: flutter pub get
 
       - name: Build Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-number=${{ github.run_number }}
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: lockwill-android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Publish latest APK release for In-App Auto-Updater
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat <<EOF > version.json
+          {
+            "versionCode": ${{ github.run_number }},
+            "versionName": "1.0.${{ github.run_number }}",
+            "apkUrl": "https://github.com/${{ github.repository }}/releases/download/latest-apk/app-release.apk"
+          }
+          EOF
+          gh release delete latest-apk --yes || true
+          git push origin :refs/tags/latest-apk || true
+          gh release create latest-apk \
+            build/app/outputs/flutter-apk/app-release.apk \
+            version.json \
+            --title "LockWill Latest (Build #${{ github.run_number }})" \
+            --notes "Bản cập nhật tự động cho ứng dụng LockWill trên Android."

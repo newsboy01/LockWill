@@ -12,9 +12,13 @@ import android.os.Build
 import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : FlutterActivity() {
     private val channelName = "com.lockwill.app/device_lock"
@@ -76,6 +80,24 @@ class MainActivity : FlutterActivity() {
                     "getInstalledApps" -> {
                         result.success(queryLaunchableApps())
                     }
+                    "getAppVersionCode" -> {
+                        val pInfo = packageManager.getPackageInfo(packageName, 0)
+                        val code = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            pInfo.longVersionCode.toInt()
+                        } else {
+                            @Suppress("DEPRECATION")
+                            pInfo.versionCode
+                        }
+                        result.success(code)
+                    }
+                    "downloadAndInstallApk" -> {
+                        val url = call.argument<String>("apkUrl") ?: ""
+                        if (url.isEmpty()) {
+                            result.success("Thiếu đường dẫn file APK.")
+                        } else {
+                            downloadAndInstallApk(url, result)
+                        }
+                    }
                     "getDeviceInfo" -> {
                         val info = mapOf(
                             "brand" to Build.BRAND,
@@ -88,6 +110,41 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    private fun downloadAndInstallApk(apkUrl: String, result: MethodChannel.Result) {
+        Thread {
+            try {
+                val outFile = File(cacheDir, "lockwill_update.apk")
+                val conn = (URL(apkUrl).openConnection() as HttpURLConnection).apply {
+                    instanceFollowRedirects = true
+                    connectTimeout = 15000
+                    readTimeout = 60000
+                }
+                conn.inputStream.use { input ->
+                    outFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                val apkUri = FileProvider.getUriForFile(
+                    this,
+                    "$packageName.fileprovider",
+                    outFile
+                )
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(apkUri, "application/vnd.android.package-archive")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                runOnUiThread {
+                    startActivity(installIntent)
+                    result.success("OK: Đã tải xong! Hãy bấm Cài đặt/Cập nhật trên màn hình.")
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    result.success("Lỗi tải bản cập nhật: ${e.message}")
+                }
+            }
+        }.start()
     }
 
     private fun isDeviceAdminEnabled(): Boolean {

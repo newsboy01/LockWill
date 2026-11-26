@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../../core/models/child_profile.dart';
 import '../../core/models/daily_usage_state.dart';
 import '../../core/platform/device_lock_service.dart';
@@ -88,6 +90,60 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     _blockedPackages = widget.profile.blockedPackages.toSet();
     _loadVoices();
     _loadDeviceAppsAndPermissions();
+  }
+
+  Future<void> _checkAndSelfUpdateApp() async {
+    final repo = _githubRepoController.text.trim().isEmpty
+        ? 'newsboy01/LockWill'
+        : _githubRepoController.text.trim();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Đang kiểm tra phiên bản mới từ GitHub...')),
+    );
+    try {
+      final res = await http
+          .get(
+            Uri.parse(
+              'https://github.com/$repo/releases/download/latest-apk/version.json',
+            ),
+            headers: const {'User-Agent': 'LockWill-App'},
+          )
+          .timeout(const Duration(seconds: 12));
+      if (res.statusCode != 200) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Chưa thấy bản phát hành mới (HTTP ${res.statusCode}).')),
+        );
+        return;
+      }
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final remoteCode = (data['versionCode'] as num?)?.toInt() ?? 0;
+      final apkUrl = (data['apkUrl'] as String?) ?? '';
+      final localCode = await widget.deviceLockService.getAppVersionCode();
+
+      if (remoteCode <= localCode) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('App đang ở bản mới nhất (#$localCode)!')),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tìm thấy bản mới (#$remoteCode)! Đang tải trực tiếp vào máy...'),
+        ),
+      );
+      final msg = await widget.deviceLockService.downloadAndInstallApk(apkUrl);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi kiểm tra cập nhật: $e')),
+      );
+    }
   }
 
   Future<void> _loadDeviceAppsAndPermissions() async {
@@ -614,6 +670,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 },
                 icon: const Icon(Icons.cloud_upload_rounded),
                 label: const Text('Đẩy lịch sử dùng máy lên Web ngay'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: _checkAndSelfUpdateApp,
+                icon: const Icon(Icons.system_update_rounded),
+                label: const Text('Tự kiểm tra & Cập nhật App (1 chạm)'),
               ),
             ],
           ),

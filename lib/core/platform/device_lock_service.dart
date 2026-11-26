@@ -30,6 +30,8 @@ abstract class DeviceLockService {
   Future<List<InstalledAppInfo>> getInstalledApps();
   Future<Map<String, dynamic>> getUsageHistory();
   Future<Map<String, String>> getDeviceInfo();
+  Future<int> getAppVersionCode();
+  Future<String> downloadAndInstallApk(String apkUrl);
 }
 
 class MethodChannelDeviceLockService implements DeviceLockService {
@@ -231,5 +233,28 @@ class MethodChannelDeviceLockService implements DeviceLockService {
       'model': 'Android Device',
       'osVersion': 'Android',
     };
+  }
+
+  @override
+  Future<int> getAppVersionCode() async {
+    if (kIsWeb) return 9999;
+    try {
+      return (await _channel.invokeMethod<int>('getAppVersionCode')) ?? 1;
+    } catch (_) {
+      return 1;
+    }
+  }
+
+  @override
+  Future<String> downloadAndInstallApk(String apkUrl) async {
+    if (kIsWeb) return 'Bản Web luôn tự động là phiên bản mới nhất!';
+    try {
+      return (await _channel.invokeMethod<String>('downloadAndInstallApk', {
+            'apkUrl': apkUrl,
+          })) ??
+          'Không thể khởi chạy bộ cài đặt.';
+    } catch (e) {
+      return 'Lỗi cập nhật: $e';
+    }
   }
 }
