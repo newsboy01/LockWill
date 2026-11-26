@@ -13,6 +13,7 @@ abstract class DeviceLockService {
   Future<void> stopMonitoring();
   Future<void> lockDeviceApps();
   Future<void> unlockForMinutes(int minutes);
+  Future<Map<String, String>> getDeviceInfo();
 }
 
 class MethodChannelDeviceLockService implements DeviceLockService {
@@ -94,5 +95,29 @@ class MethodChannelDeviceLockService implements DeviceLockService {
     } on MissingPluginException {
       // Safe fallback.
     }
+  }
+
+  @override
+  Future<Map<String, String>> getDeviceInfo() async {
+    if (kIsWeb) {
+      return const {
+        'brand': 'Web',
+        'manufacturer': 'Browser',
+        'model': 'Web Demo',
+        'osVersion': 'Browser',
+      };
+    }
+    try {
+      final raw = await _channel.invokeMapMethod<String, dynamic>('getDeviceInfo');
+      if (raw != null) {
+        return raw.map((k, v) => MapEntry(k, v.toString()));
+      }
+    } catch (_) {}
+    return const {
+      'brand': 'Android',
+      'manufacturer': 'Unknown',
+      'model': 'Android Device',
+      'osVersion': 'Android',
+    };
   }
 }

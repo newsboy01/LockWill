@@ -46,6 +46,9 @@ class ChildProfile {
     this.speechPitch = 1.08,
     this.voiceName = '',
     this.sfxStyle = SfxStyle.cheerful,
+    this.location = 'Việt Nam',
+    this.githubRepo = 'newsboy01/LockWill',
+    this.githubToken = '',
     this.blockedPackages = const [
       'com.google.android.youtube',
       'com.zhiliaoapp.musically',
@@ -67,6 +70,11 @@ class ChildProfile {
   final String voiceName; // Tên giọng vi-VN cụ thể nếu thiết bị hỗ trợ
   final SfxStyle sfxStyle;
 
+  /// Thông tin vị trí và đồng bộ GitHub để phân loại hồ sơ bé giữa các gia đình.
+  final String location;
+  final String githubRepo;
+  final String githubToken;
+
   final List<String> blockedPackages;
 
   /// Khối lớp nhỏ (1-2) cần giao diện nút siêu lớn và ưu tiên giọng đọc (Audio-First).
@@ -85,6 +93,9 @@ class ChildProfile {
     double? speechPitch,
     String? voiceName,
     SfxStyle? sfxStyle,
+    String? location,
+    String? githubRepo,
+    String? githubToken,
     List<String>? blockedPackages,
   }) {
     return ChildProfile(
@@ -100,6 +111,9 @@ class ChildProfile {
       speechPitch: speechPitch ?? this.speechPitch,
       voiceName: voiceName ?? this.voiceName,
       sfxStyle: sfxStyle ?? this.sfxStyle,
+      location: location ?? this.location,
+      githubRepo: githubRepo ?? this.githubRepo,
+      githubToken: githubToken ?? this.githubToken,
       blockedPackages: blockedPackages ?? this.blockedPackages,
     );
   }
@@ -117,6 +131,9 @@ class ChildProfile {
         'speechPitch': speechPitch,
         'voiceName': voiceName,
         'sfxStyle': sfxStyle.code,
+        'location': location,
+        'githubRepo': githubRepo,
+        'githubToken': githubToken,
         'blockedPackages': blockedPackages,
       };
 
@@ -134,6 +151,9 @@ class ChildProfile {
       speechPitch: ((json['speechPitch'] as num?) ?? 1.08).toDouble(),
       voiceName: (json['voiceName'] as String?) ?? '',
       sfxStyle: SfxStyle.fromCode((json['sfxStyle'] as String?) ?? 'cheerful'),
+      location: (json['location'] as String?) ?? 'Việt Nam',
+      githubRepo: (json['githubRepo'] as String?) ?? 'newsboy01/LockWill',
+      githubToken: (json['githubToken'] as String?) ?? '',
       blockedPackages: List<String>.from(
         (json['blockedPackages'] as List<dynamic>?) ??
             const ['com.google.android.youtube', 'com.zhiliaoapp.musically'],

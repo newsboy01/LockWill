@@ -52,6 +52,15 @@ class MainActivity : FlutterActivity() {
                         UsageMonitorService.grantMinutes(minutes)
                         result.success(null)
                     }
+                    "getDeviceInfo" -> {
+                        val info = mapOf(
+                            "brand" to Build.BRAND,
+                            "manufacturer" to Build.MANUFACTURER,
+                            "model" to Build.MODEL,
+                            "osVersion" to "Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})"
+                        )
+                        result.success(info)
+                    }
                     else -> result.notImplemented()
                 }
             }

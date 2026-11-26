@@ -41,7 +41,11 @@ jobs:
         run: flutter pub get
 
       - name: Build Web Release
-        run: flutter build web --release --base-href "/LockWill/"
+        run: |
+          flutter build web --release --base-href "/LockWill/"
+          mkdir -p build/web/parent-report build/web/reports
+          cp web_parent_report/index.html build/web/parent-report/index.html
+          cp docs/reports/learning_data.json build/web/reports/learning_data.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

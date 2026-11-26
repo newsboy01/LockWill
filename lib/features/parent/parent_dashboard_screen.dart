@@ -12,6 +12,7 @@ class ParentDashboardScreen extends StatefulWidget {
     required this.onSaveProfile,
     required this.onSimulateTimeUp,
     required this.onRequestPermissions,
+    required this.onSyncQuestionsNow,
   });
 
   final ChildProfile profile;
@@ -20,6 +21,7 @@ class ParentDashboardScreen extends StatefulWidget {
   final ValueChanged<ChildProfile> onSaveProfile;
   final VoidCallback onSimulateTimeUp;
   final VoidCallback onRequestPermissions;
+  final Future<int> Function(String repo) onSyncQuestionsNow;
 
   @override
   State<ParentDashboardScreen> createState() => _ParentDashboardScreenState();
@@ -28,6 +30,9 @@ class ParentDashboardScreen extends StatefulWidget {
 class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _pinController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _githubRepoController;
+  late final TextEditingController _githubTokenController;
   late int _age;
   late int _grade;
   late TextbookSeries _textbook;
@@ -47,6 +52,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     super.initState();
     _nameController = TextEditingController(text: widget.profile.name);
     _pinController = TextEditingController(text: widget.profile.parentPin);
+    _locationController = TextEditingController(text: widget.profile.location);
+    _githubRepoController =
+        TextEditingController(text: widget.profile.githubRepo);
+    _githubTokenController =
+        TextEditingController(text: widget.profile.githubToken);
     _age = widget.profile.age;
     _grade = widget.profile.grade;
     _textbook = widget.profile.textbook;
@@ -76,6 +86,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   void dispose() {
     _nameController.dispose();
     _pinController.dispose();
+    _locationController.dispose();
+    _githubRepoController.dispose();
+    _githubTokenController.dispose();
     super.dispose();
   }
 
@@ -152,6 +165,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             decoration: const InputDecoration(
               labelText: 'Tên gọi của bé',
               prefixIcon: Icon(Icons.child_care_rounded),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _locationController,
+            decoration: const InputDecoration(
+              labelText: 'Vị trí / Khu vực (VD: Quận 7, TP.HCM)',
+              prefixIcon: Icon(Icons.location_on_rounded),
               border: OutlineInputBorder(),
             ),
           ),
@@ -338,11 +360,57 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               border: OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 12),
+          const Divider(height: 30),
+          const Text(
+            '4. Tự động cập nhật & Đồng bộ Báo cáo GitHub',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _githubRepoController,
+            decoration: const InputDecoration(
+              labelText: 'Kho GitHub (VD: newsboy01/LockWill)',
+              prefixIcon: Icon(Icons.cloud_sync_rounded),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _githubTokenController,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'GitHub Token (để tự đẩy báo cáo học tập của bé)',
+              prefixIcon: Icon(Icons.vpn_key_rounded),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () async {
+              final count = await widget.onSyncQuestionsNow(
+                _githubRepoController.text.trim(),
+              );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    count > 0
+                        ? 'Đã tải $count câu hỏi mới nhất từ GitHub!'
+                        : 'Không kết nối được GitHub, đang dùng dữ liệu offline.',
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.download_for_offline_rounded),
+            label: const Text('Cập nhật bộ câu hỏi mới nhất từ GitHub'),
+          ),
+          const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: () {
               final cleanName = _nameController.text.trim();
               final cleanPin = _pinController.text.trim();
+              final cleanLocation = _locationController.text.trim();
+              final cleanRepo = _githubRepoController.text.trim();
               widget.onSaveProfile(
                 widget.profile.copyWith(
                   name: cleanName.isEmpty ? 'Bé' : cleanName,
@@ -357,6 +425,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   speechPitch: _speechPitch,
                   voiceName: _voiceName,
                   sfxStyle: _sfxStyle,
+                  location: cleanLocation.isEmpty ? 'Việt Nam' : cleanLocation,
+                  githubRepo:
+                      cleanRepo.isEmpty ? 'newsboy01/LockWill' : cleanRepo,
+                  githubToken: _githubTokenController.text.trim(),
                 ),
               );
               Navigator.of(context).pop();

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LockWill — Phân Tích Học Tập Dành Cho Phụ Huynh</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --accent: #f97316;
+      --good: #10b981;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --text: #1e293b;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    header {
+      background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+      color: #fff;
+      padding: 24px 20px;
+    }
+    .container { max-width: 1120px; margin: 0 auto; padding: 20px; }
+    header h1 { margin: 0 0 6px; font-size: 26px; }
+    header p { margin: 0; opacity: 0.9; font-size: 15px; }
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+      background: var(--card);
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+      margin-bottom: 18px;
+    }
+    .filters label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+    .filters select {
+      width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1;
+      border-radius: 10px; font-size: 14px; background: #fff;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .kpi {
+      background: var(--card); padding: 18px; border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    }
+    .kpi .label { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .kpi .value { font-size: 28px; font-weight: 800; margin-top: 6px; color: var(--primary); }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--card); padding: 20px; border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    }
+    .card h2 { margin: 0 0 14px; font-size: 18px; }
+    .bar-row { margin-bottom: 12px; }
+    .bar-head { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .bar-track { height: 12px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; transition: width 0.3s ease; }
+    .insight {
+      padding: 12px 14px; border-radius: 12px; margin-bottom: 10px;
+      font-size: 14px; line-height: 1.5;
+    }
+    .insight.good { background: #ecfdf5; border-left: 4px solid var(--good); color: #065f46; }
+    .insight.warn { background: #fffbeb; border-left: 4px solid var(--warn); color: #92400e; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+    .pill {
+      display: inline-block; padding: 3px 10px; border-radius: 99px;
+      font-size: 12px; font-weight: 700; background: #e0f2fe; color: #0369a1;
+    }
+    .table-wrap { overflow-x: auto; }
+    .top-actions { margin-top: 10px; }
+    .btn-link {
+      display: inline-block; background: rgba(255,255,255,0.2); color: #fff;
+      text-decoration: none; padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container" style="padding:0;">
+      <h1>🦉 LockWill — Tổng Hợp & Phân Tích Học Tập</h1>
+      <p>Theo dõi tiến độ học tập theo từng bé, thiết bị cài đặt (hãng/model) và vị trí — tự động đánh giá điểm mạnh & điểm cần ôn thêm.</p>
+      <div class="top-actions">
+        <a class="btn-link" href="../">⬅️ Mở lại App LockWill Web</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="filters">
+      <div>
+        <label for="fChild">Tên bé</label>
+        <select id="fChild"><option value="ALL">Tất cả các bé</option></select>
+      </div>
+      <div>
+        <label for="fDevice">Thiết bị / Hãng máy</label>
+        <select id="fDevice"><option value="ALL">Tất cả thiết bị</option></select>
+      </div>
+      <div>
+        <label for="fLocation">Vị trí / Khu vực</label>
+        <select id="fLocation"><option value="ALL">Tất cả vị trí</option></select>
+      </div>
+      <div>
+        <label for="fGrade">Lớp học</label>
+        <select id="fGrade"><option value="ALL">Tất cả lớp (1–5)</option></select>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="kpi"><div class="label">Tổng số phiên làm bài</div><div class="value" id="kSessions">0</div></div>
+      <div class="kpi"><div class="label">Tổng số câu hoàn thành</div><div class="value" id="kQuestions">0</div></div>
+      <div class="kpi"><div class="label">Tỉ lệ đúng ngay lần đầu</div><div class="value" id="kAccuracy" style="color:var(--good);">0%</div></div>
+      <div class="kpi"><div class="label">Tổng thời gian đã thưởng</div><div class="value" id="kMinutes" style="color:var(--accent);">0 phút</div></div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <h2>📊 Độ chính xác theo từng môn học</h2>
+        <div id="subjectBars">Đang tải dữ liệu...</div>
+      </div>
+      <div class="card">
+        <h2>🧠 Tự động đánh giá & Gợi ý cho phụ huynh</h2>
+        <div id="insightsBox">Đang phân tích...</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📱 Nhật ký chi tiết theo Bé, Thiết bị & Vị trí</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Bé / Lớp</th>
+              <th>Thiết bị (Hãng • Model • OS)</th>
+              <th>Vị trí</th>
+              <th>Kết quả</th>
+              <th>Thưởng</th>
+            </tr>
+          </thead>
+          <tbody id="sessionTable"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let allSessions = [];
+
+    async function loadData() {
+      const urls = [
+        'https://raw.githubusercontent.com/newsboy01/LockWill/main/docs/reports/learning_data.json?t=' + Date.now(),
+        '../reports/learning_data.json'
+      ];
+      for (const u of urls) {
+        try {
+          const res = await fetch(u);
+          if (res.ok) {
+            const json = await res.json();
+            allSessions = json.sessions || [];
+            break;
+          }
+        } catch (_) {}
+      }
+      populateFilters();
+      render();
+    }
+
+    function fillSelect(id, values, labelPrefix = '') {
+      const el = document.getElementById(id);
+      const first = el.options[0].outerHTML;
+      el.innerHTML = first + [...new Set(values)].sort().map(v => `<option value="${v}">${labelPrefix}${v}</option>`).join('');
+      el.onchange = render;
+    }
+
+    function populateFilters() {
+      fillSelect('fChild', allSessions.map(s => s.childName));
+      fillSelect('fDevice', allSessions.map(s => `${s.deviceBrand} ${s.deviceModel}`));
+      fillSelect('fLocation', allSessions.map(s => s.location));
+      fillSelect('fGrade', allSessions.map(s => String(s.grade)), 'Lớp ');
+    }
+
+    function render() {
+      const c = document.getElementById('fChild').value;
+      const d = document.getElementById('fDevice').value;
+      const l = document.getElementById('fLocation').value;
+      const g = document.getElementById('fGrade').value;
+
+      const filtered = allSessions.filter(s =>
+        (c === 'ALL' || s.childName === c) &&
+        (d === 'ALL' || `${s.deviceBrand} ${s.deviceModel}` === d) &&
+        (l === 'ALL' || s.location === l) &&
+        (g === 'ALL' || String(s.grade) === g)
+      );
+
+      const totalQ = filtered.reduce((a, s) => a + (s.totalQuestions || 0), 0);
+      const firstRight = filtered.reduce((a, s) => a + (s.firstTryCorrect || 0), 0);
+      const totalMin = filtered.reduce((a, s) => a + (s.rewardMinutes || 0), 0);
+      const acc = totalQ > 0 ? Math.round((firstRight / totalQ) * 100) : 0;
+
+      document.getElementById('kSessions').textContent = filtered.length;
+      document.getElementById('kQuestions').textContent = totalQ;
+      document.getElementById('kAccuracy').textContent = acc + '%';
+      document.getElementById('kMinutes').textContent = totalMin + ' phút';
+
+      // Tổng hợp theo môn học
+      const subjectMap = {};
+      filtered.forEach(s => {
+        const sb = s.subjectBreakdown || {};
+        Object.keys(sb).forEach(sub => {
+          if (!subjectMap[sub]) subjectMap[sub] = { correct: 0, wrong: 0 };
+          subjectMap[sub].correct += sb[sub].correct || 0;
+          subjectMap[sub].wrong += sb[sub].wrong || 0;
+        });
+      });
+
+      const barsEl = document.getElementById('subjectBars');
+      const insightsEl = document.getElementById('insightsBox');
+      const entries = Object.entries(subjectMap);
+
+      if (entries.length === 0) {
+        barsEl.innerHTML = '<p style="color:#64748b">Chưa có dữ liệu cho bộ lọc này.</p>';
+        insightsEl.innerHTML = '<p style="color:#64748b">Hãy chọn bé khác hoặc chờ bé hoàn thành bài tập.</p>';
+      } else {
+        barsEl.innerHTML = entries.map(([sub, st]) => {
+          const sum = st.correct + st.wrong;
+          const pct = sum > 0 ? Math.round((st.correct / sum) * 100) : 0;
+          const color = pct >= 80 ? '#10b981' : (pct >= 60 ? '#f59e0b' : '#ef4444');
+          return `
+            <div class="bar-row">
+              <div class="bar-head"><span>${sub}</span><span>${pct}% (${st.correct}/${sum} đúng ngay)</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color};"></div></div>
+            </div>`;
+        }).join('');
+
+        const insights = [];
+        entries.forEach(([sub, st]) => {
+          const sum = st.correct + st.wrong;
+          const pct = sum > 0 ? Math.round((st.correct / sum) * 100) : 0;
+          if (pct >= 85) {
+            insights.push(`<div class="insight good"><strong>Điểm mạnh — ${sub} (${pct}%):</strong> Bé nắm rất vững kiến thức môn này, có thể tăng dần độ khó để thử thách thêm.</div>`);
+          } else if (pct < 75) {
+            insights.push(`<div class="insight warn"><strong>Cần ôn thêm — ${sub} (${pct}%):</strong> Bé còn nhầm ở một số câu. Phụ huynh nên bật tốc độ đọc chậm hơn hoặc cùng bé ôn lại dạng bài tuần hiện tại.</div>`);
+          }
+        });
+        if (insights.length === 0) {
+          insights.push(`<div class="insight good"><strong>Tiến độ ổn định (${acc}%):</strong> Bé học đều các môn và hoàn thành tốt các lượt đổi giờ!</div>`);
+        }
+        insightsEl.innerHTML = insights.join('');
+      }
+
+      document.getElementById('sessionTable').innerHTML = filtered.map(s => {
+        const dt = new Date(s.timestamp).toLocaleString('vi-VN');
+        return `
+          <tr>
+            <td>${dt}</td>
+            <td><strong>${s.childName}</strong> (${s.age}t)<br><span class="pill">Lớp ${s.grade}</span></td>
+            <td><strong>${s.deviceBrand}</strong> • ${s.deviceModel}<br><small style="color:#64748b">${s.osVersion}</small></td>
+            <td>📍 ${s.location}</td>
+            <td>Đúng lần đầu: <strong>${s.firstTryCorrect}/${s.totalQuestions}</strong><br><small style="color:#64748b">Thử lại: ${s.wrongAttempts} lần</small></td>
+            <td><span class="pill" style="background:#ffedd5;color:#c2410c;">+${s.rewardMinutes} phút</span></td>
+          </tr>`;
+      }).join('');
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

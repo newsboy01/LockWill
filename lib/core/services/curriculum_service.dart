@@ -1,13 +1,42 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/child_profile.dart';
 import '../models/question.dart';
 
 class CurriculumService {
+  static const _cacheKey = 'lockwill_remote_questions_cache_v1';
   List<Question>? _cachedQuestions;
   final Set<String> _askedPromptsInSession = <String>{};
   final Random _random = Random();
+
+  /// Tự động tải ngân hàng câu hỏi mới nhất từ GitHub (không cần cài lại APK).
+  Future<int> syncQuestionsFromGitHub(String repo) async {
+    try {
+      final cleanRepo = repo.trim().isEmpty ? 'newsboy01/LockWill' : repo.trim();
+      final uri = Uri.parse(
+        'https://raw.githubusercontent.com/$cleanRepo/main/assets/data/sample_questions.json',
+      );
+      final res = await http.get(uri).timeout(const Duration(seconds: 6));
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body) as List<dynamic>;
+        final parsed = decoded
+            .map((e) => Question.fromJson(e as Map<String, dynamic>))
+            .toList();
+        if (parsed.isNotEmpty) {
+          _cachedQuestions = parsed;
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_cacheKey, res.body);
+          return parsed.length;
+        }
+      }
+    } catch (_) {
+      // Mất mạng thì giữ nguyên cache hoặc bộ câu hỏi đóng sẵn trong app.
+    }
+    return 0;
+  }
 
   /// Ước lượng tuần học thực tế theo năm học Việt Nam (khai giảng đầu tháng 9).
   static int estimateCurrentSchoolWeek([DateTime? now]) {
@@ -287,6 +316,17 @@ class CurriculumService {
   }
 
   Future<List<Question>> _loadFromAssets() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedRaw = prefs.getString(_cacheKey);
+      if (cachedRaw != null && cachedRaw.isNotEmpty) {
+        final decoded = jsonDecode(cachedRaw) as List<dynamic>;
+        return decoded
+            .map((e) => Question.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (_) {}
+
     final raw = await rootBundle.loadString('assets/data/sample_questions.json');
     final decoded = jsonDecode(raw) as List<dynamic>;
     return decoded

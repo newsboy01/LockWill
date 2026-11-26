@@ -35,7 +35,10 @@
 - [x] Xây dựng `CurriculumService` (tính tuần học thực tế theo năm học, lọc theo Lớp 1–5 & 3 bộ sách: *Kết nối tri thức*, *Chân trời sáng tạo*, *Cánh Diều*)
 - [x] Tạo bộ dữ liệu câu hỏi mẫu `assets/data/sample_questions.json` cho cả 5 khối lớp (Lớp 1–5) với nhiều dạng bài (`visual_count`, `compare_math`, `true_false`, `multiple_choice`, `fill_number`)
 - [x] Xây dựng bộ sinh câu hỏi Toán & Logic động theo từng lớp trong `CurriculumService` kèm cơ chế chống trùng lặp câu hỏi trong phiên/ngày (`_askedPromptsInSession`)
-- [x] Lưu trữ bền vững hồ sơ bé (tên, tuổi, lớp, bộ sách, mã PIN) và trạng thái sử dụng trong ngày bằng `StorageService` (`shared_preferences`)
+- [x] Lưu trữ bền vững hồ sơ bé (tên, tuổi, lớp, bộ sách, vị trí, mã PIN) và trạng thái sử dụng trong ngày bằng `StorageService` (`shared_preferences`)
+- [x] Tự động đồng bộ bộ câu hỏi mới nhất từ GitHub (`CurriculumService.syncQuestionsFromGitHub`) + lưu cache offline (không cần cài lại APK khi thêm câu hỏi mới)
+- [x] Ghi nhận kết quả học tập theo từng phiên kèm thông tin thiết bị (hãng/model/Android qua `MainActivity.kt`) và vị trí, đồng bộ lên GitHub (`LearningReportService` → `docs/reports/learning_data.json`)
+- [x] Xây dựng trang Web Tổng hợp & Phân tích Học tập miễn phí trên GitHub Pages (`web_parent_report/index.html` → `/parent-report/`) lọc theo Tên bé, Thiết bị, Vị trí, Lớp và tự động đánh giá điểm mạnh/điểm cần ôn thêm
 - [ ] Chuẩn hóa đầy đủ ngân hàng câu hỏi 35 tuần học cho cả 5 khối lớp và đồng bộ từ Cloud (Supabase/Firebase) + Offline Cache (SQLite)
 - [ ] `[+]` **Cải tiến:** Tích hợp AI tạo giải thích gợi ý thông minh hoặc câu đố vui theo chủ đề ngày lễ/mùa trong năm.
 

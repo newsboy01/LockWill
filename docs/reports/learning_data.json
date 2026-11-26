@@ -1,0 +1,66 @@
+{
+  "updatedAt": "2026-11-26T14:15:00+07:00",
+  "sessions": [
+    {
+      "id": "sess_demo_1",
+      "timestamp": "2026-11-26T09:15:00+07:00",
+      "childName": "Bé Minh",
+      "age": 6,
+      "grade": 1,
+      "textbook": "Kết nối tri thức với cuộc sống",
+      "location": "Quận 7, TP.HCM",
+      "deviceBrand": "Samsung",
+      "deviceModel": "Galaxy Tab A9",
+      "osVersion": "Android 14 (SDK 34)",
+      "totalQuestions": 5,
+      "firstTryCorrect": 4,
+      "wrongAttempts": 1,
+      "rewardMinutes": 15,
+      "subjectBreakdown": {
+        "Toán": { "correct": 2, "wrong": 1 },
+        "Tiếng Việt": { "correct": 2, "wrong": 0 }
+      }
+    },
+    {
+      "id": "sess_demo_2",
+      "timestamp": "2026-11-26T11:30:00+07:00",
+      "childName": "Bé Minh",
+      "age": 6,
+      "grade": 1,
+      "textbook": "Kết nối tri thức với cuộc sống",
+      "location": "Quận 7, TP.HCM",
+      "deviceBrand": "Samsung",
+      "deviceModel": "Galaxy Tab A9",
+      "osVersion": "Android 14 (SDK 34)",
+      "totalQuestions": 8,
+      "firstTryCorrect": 6,
+      "wrongAttempts": 3,
+      "rewardMinutes": 15,
+      "subjectBreakdown": {
+        "Toán": { "correct": 3, "wrong": 2 },
+        "Tiếng Việt": { "correct": 2, "wrong": 0 },
+        "Tự nhiên & Xã hội": { "correct": 1, "wrong": 0 }
+      }
+    },
+    {
+      "id": "sess_demo_3",
+      "timestamp": "2026-11-26T13:10:00+07:00",
+      "childName": "Bé An",
+      "age": 8,
+      "grade": 3,
+      "textbook": "Chân trời sáng tạo",
+      "location": "Cầu Giấy, Hà Nội",
+      "deviceBrand": "Xiaomi",
+      "deviceModel": "Redmi Note 13",
+      "osVersion": "Android 14 (SDK 34)",
+      "totalQuestions": 5,
+      "firstTryCorrect": 5,
+      "wrongAttempts": 0,
+      "rewardMinutes": 15,
+      "subjectBreakdown": {
+        "Toán": { "correct": 3, "wrong": 0 },
+        "Tiếng Anh": { "correct": 2, "wrong": 0 }
+      }
+    }
+  ]
+}

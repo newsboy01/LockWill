@@ -5,6 +5,7 @@ import 'core/platform/device_lock_service.dart';
 import 'core/services/audio_guide_service.dart';
 import 'core/services/curriculum_service.dart';
 import 'core/services/escalation_engine.dart';
+import 'core/services/learning_report_service.dart';
 import 'core/services/storage_service.dart';
 import 'features/lock_screen/lock_screen.dart';
 import 'features/parent/parent_dashboard_screen.dart';
@@ -45,6 +46,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
   final CurriculumService _curriculumService = CurriculumService();
   final AudioGuideService _audioGuide = AudioGuideService();
   final StorageService _storage = StorageService();
+  final LearningReportService _reportService = LearningReportService();
 
   bool _loaded = false;
   late ChildProfile _profile;
@@ -59,6 +61,9 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
   Future<void> _initData() async {
     final profile = await _storage.loadProfile();
     await _audioGuide.applyProfileSettings(profile);
+    // Tự động kiểm tra và cập nhật bộ câu hỏi mới nhất từ GitHub chạy nền.
+    _curriculumService.syncQuestionsFromGitHub(profile.githubRepo);
+
     var usage = await _storage.loadUsageState(profile);
     final fresh = _escalationEngine.ensureFreshDay(usage, profile);
     if (fresh.dateKey != usage.dateKey) {
@@ -93,18 +98,32 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
           challenge: challenge,
           questions: questions,
           audioGuide: _audioGuide,
-          onCompleted: (correctCount) async {
+          onCompleted: (summary) async {
             Navigator.of(context).pop();
             await _audioGuide.playUnlockSound();
             await _lockService.unlockForMinutes(challenge.rewardMinutes);
+
             final updated = _usageState.copyWith(
               grantedMinutes:
                   _usageState.grantedMinutes + challenge.rewardMinutes,
               extensionCountToday: _usageState.extensionCountToday + 1,
-              totalCorrectToday: _usageState.totalCorrectToday + correctCount,
+              totalCorrectToday:
+                  _usageState.totalCorrectToday + summary.firstTryCorrect,
             );
             await _storage.saveUsageState(updated);
             setState(() => _usageState = updated);
+
+            // Lưu & tự đồng bộ báo cáo học tập (kèm thông tin thiết bị, vị trí) lên GitHub.
+            await _reportService.recordAndSyncSession(
+              profile: _profile,
+              deviceLockService: _lockService,
+              totalQuestions: summary.totalQuestions,
+              firstTryCorrect: summary.firstTryCorrect,
+              wrongAttempts: summary.wrongAttempts,
+              rewardMinutes: challenge.rewardMinutes,
+              subjectBreakdown: summary.subjectBreakdown,
+            );
+
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -149,6 +168,8 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
             if (mounted) Navigator.of(context).pop();
           },
           onRequestPermissions: () => _lockService.requestRequiredPermissions(),
+          onSyncQuestionsNow: (repo) =>
+              _curriculumService.syncQuestionsFromGitHub(repo),
         ),
       ),
     );

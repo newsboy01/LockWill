@@ -7,6 +7,20 @@ import '../../core/services/escalation_engine.dart';
 import '../../core/widgets/animated_owl_mascot.dart';
 import '../../core/widgets/tactile_3d_button.dart';
 
+class QuizResultSummary {
+  const QuizResultSummary({
+    required this.totalQuestions,
+    required this.firstTryCorrect,
+    required this.wrongAttempts,
+    required this.subjectBreakdown,
+  });
+
+  final int totalQuestions;
+  final int firstTryCorrect;
+  final int wrongAttempts;
+  final Map<String, Map<String, int>> subjectBreakdown;
+}
+
 class QuizScreen extends StatefulWidget {
   const QuizScreen({
     super.key,
@@ -21,7 +35,7 @@ class QuizScreen extends StatefulWidget {
   final ExtensionChallenge challenge;
   final List<Question> questions;
   final AudioGuideService audioGuide;
-  final void Function(int correctCount) onCompleted;
+  final void Function(QuizResultSummary summary) onCompleted;
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -30,7 +44,10 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen>
     with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
-  int _correctCount = 0;
+  int _firstTryCorrect = 0;
+  int _wrongAttempts = 0;
+  bool _missedCurrentQuestion = false;
+  final Map<String, Map<String, int>> _subjectBreakdown = {};
   int _streak = 0;
   bool _showHint = false;
   bool _isTransitioning = false;
@@ -72,7 +89,16 @@ class _QuizScreenState extends State<QuizScreen>
   Future<void> _onCorrectAnswer({int? selectedIndex}) async {
     if (_isTransitioning) return;
     _isTransitioning = true;
-    _correctCount++;
+    final question = widget.questions[_currentIndex];
+    final subjectKey = question.subject.split(' - ').first;
+    final stats = _subjectBreakdown.putIfAbsent(
+      subjectKey,
+      () => {'correct': 0, 'wrong': 0},
+    );
+    if (!_missedCurrentQuestion) {
+      _firstTryCorrect++;
+      stats['correct'] = (stats['correct'] ?? 0) + 1;
+    }
     _streak++;
 
     setState(() {
@@ -91,12 +117,20 @@ class _QuizScreenState extends State<QuizScreen>
     if (!mounted) return;
 
     if (_currentIndex + 1 >= widget.questions.length) {
-      widget.onCompleted(_correctCount);
+      widget.onCompleted(
+        QuizResultSummary(
+          totalQuestions: widget.questions.length,
+          firstTryCorrect: _firstTryCorrect,
+          wrongAttempts: _wrongAttempts,
+          subjectBreakdown: _subjectBreakdown,
+        ),
+      );
       return;
     }
 
     setState(() {
       _currentIndex++;
+      _missedCurrentQuestion = false;
       _owlMood = OwlMood.idle;
       _correctSelectedIndex = null;
       _wrongSelectedIndex = null;
@@ -111,6 +145,16 @@ class _QuizScreenState extends State<QuizScreen>
   Future<void> _onWrongAnswer({int? selectedIndex}) async {
     if (_isTransitioning) return;
     final question = widget.questions[_currentIndex];
+    final subjectKey = question.subject.split(' - ').first;
+    final stats = _subjectBreakdown.putIfAbsent(
+      subjectKey,
+      () => {'correct': 0, 'wrong': 0},
+    );
+    if (!_missedCurrentQuestion) {
+      stats['wrong'] = (stats['wrong'] ?? 0) + 1;
+    }
+    _missedCurrentQuestion = true;
+    _wrongAttempts++;
     _streak = 0;
 
     setState(() {
