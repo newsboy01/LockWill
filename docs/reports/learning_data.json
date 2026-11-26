@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-26T18:28:55.679947",
+  "updatedAt": "2026-11-26T19:40:21.680614",
   "deviceMonitors": [
     {
       "deviceKey": "Will_OPPO_CPH2781",
@@ -11,36 +11,36 @@
       "deviceModel": "CPH2781",
       "osVersion": "Android 16 (SDK 36)",
       "currentApp": "LockWill",
-      "lastSeenAt": "2026-11-26T18:28:53",
-      "remainingSeconds": 1034,
+      "lastSeenAt": "2026-11-26T19:40:20",
+      "remainingSeconds": 300,
       "apps": [
         {
           "packageName": "com.lockwill.app",
           "appName": "LockWill",
-          "seconds": 584,
+          "seconds": 872,
           "isBlockedApp": false,
-          "lastUsedAt": "2026-11-26T18:28:53"
+          "lastUsedAt": "2026-11-26T19:40:20"
         },
         {
           "packageName": "com.android.launcher",
           "appName": "Trình khởi tạo hệ thống",
-          "seconds": 101,
+          "seconds": 177,
           "isBlockedApp": false,
-          "lastUsedAt": "2026-11-26T18:24:54"
+          "lastUsedAt": "2026-11-26T19:39:22"
         },
         {
           "packageName": "com.ss.android.ugc.trill",
           "appName": "TikTok",
-          "seconds": 759,
+          "seconds": 883,
           "isBlockedApp": true,
-          "lastUsedAt": "2026-11-26T18:22:13"
+          "lastUsedAt": "2026-11-26T19:39:25"
         },
         {
           "packageName": "com.google.android.youtube",
           "appName": "YouTube",
-          "seconds": 159,
+          "seconds": 1097,
           "isBlockedApp": true,
-          "lastUsedAt": "2026-11-26T18:27:51"
+          "lastUsedAt": "2026-11-26T19:38:40"
         },
         {
           "packageName": "com.fpt.chat",
@@ -94,14 +94,206 @@
         {
           "packageName": "com.android.vending",
           "appName": "Cửa hàng Google Play",
-          "seconds": 28,
+          "seconds": 31,
           "isBlockedApp": false,
-          "lastUsedAt": "2026-11-26T18:25:57"
+          "lastUsedAt": "2026-11-26T19:13:49"
+        },
+        {
+          "packageName": "com.facebook.orca",
+          "appName": "Messenger",
+          "seconds": 343,
+          "isBlockedApp": false,
+          "lastUsedAt": "2026-11-26T18:47:00"
+        },
+        {
+          "packageName": "com.zing.zalo",
+          "appName": "Zalo",
+          "seconds": 27,
+          "isBlockedApp": false,
+          "lastUsedAt": "2026-11-26T19:13:05"
+        },
+        {
+          "packageName": "com.facebook.katana",
+          "appName": "Facebook",
+          "seconds": 268,
+          "isBlockedApp": false,
+          "lastUsedAt": "2026-11-26T19:08:06"
+        },
+        {
+          "packageName": "com.android.mms",
+          "appName": "Tin nhắn",
+          "seconds": 1,
+          "isBlockedApp": false,
+          "lastUsedAt": "2026-11-26T19:08:11"
+        },
+        {
+          "packageName": "com.tpb.mb.gprsandroid",
+          "appName": "TPBank Mobile",
+          "seconds": 35,
+          "isBlockedApp": false,
+          "lastUsedAt": "2026-11-26T19:12:58"
         }
       ]
     }
   ],
   "sessions": [
+    {
+      "id": "sess_1795696820900",
+      "timestamp": "2026-11-26T19:40:20.900832",
+      "childName": "Will",
+      "age": 6,
+      "grade": 1,
+      "textbook": "Kết nối tri thức với cuộc sống",
+      "location": "Cam Ranh, Khánh Hoà",
+      "deviceBrand": "OPPO",
+      "deviceModel": "CPH2781",
+      "osVersion": "Android 16 (SDK 36)",
+      "totalQuestions": 11,
+      "firstTryCorrect": 11,
+      "wrongAttempts": 0,
+      "rewardMinutes": 5,
+      "subjectBreakdown": {
+        "Tiếng Việt": {
+          "correct": 3,
+          "wrong": 0
+        },
+        "Toán": {
+          "correct": 5,
+          "wrong": 0
+        },
+        "Tiếng Anh Lớp 1": {
+          "correct": 3,
+          "wrong": 0
+        }
+      },
+      "appUsageSnapshot": {
+        "date": "2026-11-26",
+        "remainingSeconds": 300,
+        "currentApp": "LockWill",
+        "currentAppUpdatedAt": "2026-11-26T19:40:20",
+        "apps": [
+          {
+            "packageName": "com.lockwill.app",
+            "appName": "LockWill",
+            "seconds": 872,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T19:40:20"
+          },
+          {
+            "packageName": "com.android.launcher",
+            "appName": "Trình khởi tạo hệ thống",
+            "seconds": 177,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T19:39:22"
+          },
+          {
+            "packageName": "com.ss.android.ugc.trill",
+            "appName": "TikTok",
+            "seconds": 883,
+            "isBlockedApp": true,
+            "lastUsedAt": "2026-11-26T19:39:25"
+          },
+          {
+            "packageName": "com.google.android.youtube",
+            "appName": "YouTube",
+            "seconds": 1097,
+            "isBlockedApp": true,
+            "lastUsedAt": "2026-11-26T19:38:40"
+          },
+          {
+            "packageName": "com.fpt.chat",
+            "appName": "FPT Chat",
+            "seconds": 13,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:11:52"
+          },
+          {
+            "packageName": "com.google.android.gms",
+            "appName": "Dịch vụ Google Play",
+            "seconds": 4,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:32:25"
+          },
+          {
+            "packageName": "com.google.android.permissioncontroller",
+            "appName": "Trình điều khiển quyền",
+            "seconds": 8,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:33:21"
+          },
+          {
+            "packageName": "com.heytap.market",
+            "appName": "App Market",
+            "seconds": 12,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T18:16:24"
+          },
+          {
+            "packageName": "android",
+            "appName": "Hệ thống Android",
+            "seconds": 3,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T18:25:22"
+          },
+          {
+            "packageName": "com.google.android.packageinstaller",
+            "appName": "Trình cài đặt gói",
+            "seconds": 7,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T18:25:27"
+          },
+          {
+            "packageName": "com.android.settings",
+            "appName": "Cài đặt",
+            "seconds": 2,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:36:12"
+          },
+          {
+            "packageName": "com.android.vending",
+            "appName": "Cửa hàng Google Play",
+            "seconds": 31,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T19:13:49"
+          },
+          {
+            "packageName": "com.facebook.orca",
+            "appName": "Messenger",
+            "seconds": 343,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T18:47:00"
+          },
+          {
+            "packageName": "com.zing.zalo",
+            "appName": "Zalo",
+            "seconds": 27,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T19:13:05"
+          },
+          {
+            "packageName": "com.facebook.katana",
+            "appName": "Facebook",
+            "seconds": 268,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T19:08:06"
+          },
+          {
+            "packageName": "com.android.mms",
+            "appName": "Tin nhắn",
+            "seconds": 1,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T19:08:11"
+          },
+          {
+            "packageName": "com.tpb.mb.gprsandroid",
+            "appName": "TPBank Mobile",
+            "seconds": 35,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T19:12:58"
+          }
+        ]
+      }
+    },
     {
       "id": "sess_1795692534707",
       "timestamp": "2026-11-26T18:28:54.707829",
