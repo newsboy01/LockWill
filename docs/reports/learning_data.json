@@ -1,6 +1,49 @@
 {
-  "updatedAt": "2026-11-26T16:30:49.941511",
+  "updatedAt": "2026-11-26T17:11:05.235214",
   "deviceMonitors": [
+    {
+      "deviceKey": "Will_OPPO_CPH2781",
+      "childName": "Will",
+      "age": 6,
+      "grade": 1,
+      "location": "Cam Ranh, Khánh Hoà",
+      "deviceBrand": "OPPO",
+      "deviceModel": "CPH2781",
+      "osVersion": "Android 16 (SDK 36)",
+      "currentApp": "LockWill",
+      "lastSeenAt": "2026-11-26T17:11:03",
+      "remainingSeconds": 900,
+      "apps": [
+        {
+          "packageName": "com.lockwill.app",
+          "appName": "LockWill",
+          "seconds": 38,
+          "isBlockedApp": false,
+          "lastUsedAt": "2026-11-26T17:11:03"
+        },
+        {
+          "packageName": "com.android.launcher",
+          "appName": "Trình khởi tạo hệ thống",
+          "seconds": 22,
+          "isBlockedApp": false,
+          "lastUsedAt": "2026-11-26T17:07:29"
+        },
+        {
+          "packageName": "com.ss.android.ugc.trill",
+          "appName": "TikTok",
+          "seconds": 21,
+          "isBlockedApp": true,
+          "lastUsedAt": "2026-11-26T17:07:23"
+        },
+        {
+          "packageName": "com.google.android.youtube",
+          "appName": "YouTube",
+          "seconds": 131,
+          "isBlockedApp": true,
+          "lastUsedAt": "2026-11-26T17:10:36"
+        }
+      ]
+    },
     {
       "deviceKey": "will_OPPO_CPH2781",
       "childName": "will",
@@ -96,6 +139,68 @@
     }
   ],
   "sessions": [
+    {
+      "id": "sess_1795687864395",
+      "timestamp": "2026-11-26T17:11:04.395180",
+      "childName": "Will",
+      "age": 6,
+      "grade": 1,
+      "textbook": "Kết nối tri thức với cuộc sống",
+      "location": "Cam Ranh, Khánh Hoà",
+      "deviceBrand": "OPPO",
+      "deviceModel": "CPH2781",
+      "osVersion": "Android 16 (SDK 36)",
+      "totalQuestions": 5,
+      "firstTryCorrect": 4,
+      "wrongAttempts": 1,
+      "rewardMinutes": 15,
+      "subjectBreakdown": {
+        "Toán": {
+          "correct": 3,
+          "wrong": 0
+        },
+        "Tiếng Việt": {
+          "correct": 1,
+          "wrong": 1
+        }
+      },
+      "appUsageSnapshot": {
+        "date": "2026-11-26",
+        "remainingSeconds": 900,
+        "currentApp": "LockWill",
+        "currentAppUpdatedAt": "2026-11-26T17:11:03",
+        "apps": [
+          {
+            "packageName": "com.lockwill.app",
+            "appName": "LockWill",
+            "seconds": 38,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:11:03"
+          },
+          {
+            "packageName": "com.android.launcher",
+            "appName": "Trình khởi tạo hệ thống",
+            "seconds": 22,
+            "isBlockedApp": false,
+            "lastUsedAt": "2026-11-26T17:07:29"
+          },
+          {
+            "packageName": "com.ss.android.ugc.trill",
+            "appName": "TikTok",
+            "seconds": 21,
+            "isBlockedApp": true,
+            "lastUsedAt": "2026-11-26T17:07:23"
+          },
+          {
+            "packageName": "com.google.android.youtube",
+            "appName": "YouTube",
+            "seconds": 131,
+            "isBlockedApp": true,
+            "lastUsedAt": "2026-11-26T17:10:36"
+          }
+        ]
+      }
+    },
     {
       "id": "sess_demo_1",
       "timestamp": "2026-11-26T09:15:00+07:00",
