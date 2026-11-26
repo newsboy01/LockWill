@@ -5,6 +5,7 @@ import 'core/platform/device_lock_service.dart';
 import 'core/services/audio_guide_service.dart';
 import 'core/services/curriculum_service.dart';
 import 'core/services/escalation_engine.dart';
+import 'core/services/storage_service.dart';
 import 'features/lock_screen/lock_screen.dart';
 import 'features/parent/parent_dashboard_screen.dart';
 import 'features/parent/parent_gate_dialog.dart';
@@ -43,29 +44,33 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
   final EscalationEngine _escalationEngine = EscalationEngine();
   final CurriculumService _curriculumService = CurriculumService();
   final AudioGuideService _audioGuide = AudioGuideService();
+  final StorageService _storage = StorageService();
 
+  bool _loaded = false;
   late ChildProfile _profile;
   late DailyUsageState _usageState;
 
   @override
   void initState() {
     super.initState();
-    _profile = ChildProfile(
-      name: 'Bé Minh',
-      grade: 1,
-      textbook: TextbookSeries.ketNoiTriThuc,
-      currentWeek: CurriculumService.estimateCurrentSchoolWeek(),
-      dailyBaseMinutes: 30,
-      dailyMaxMinutes: 90,
-      parentPin: '1234',
-    );
-    _usageState = DailyUsageState(
-      dateKey: EscalationEngine.todayKey(),
-      usedMinutes: 30, // Demo trạng thái vừa hết giờ miễn phí đầu ngày
-      grantedMinutes: 30,
-      extensionCountToday: 0,
-      totalCorrectToday: 0,
-    );
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    final profile = await _storage.loadProfile();
+    var usage = await _storage.loadUsageState(profile);
+    final fresh = _escalationEngine.ensureFreshDay(usage, profile);
+    if (fresh.dateKey != usage.dateKey) {
+      _curriculumService.resetSessionHistory();
+      await _storage.saveUsageState(fresh);
+      usage = fresh;
+    }
+    if (!mounted) return;
+    setState(() {
+      _profile = profile;
+      _usageState = usage;
+      _loaded = true;
+    });
   }
 
   Future<void> _startExtensionQuiz() async {
@@ -89,20 +94,21 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
           audioGuide: _audioGuide,
           onCompleted: (correctCount) async {
             Navigator.of(context).pop();
+            await _audioGuide.playUnlockSound();
             await _lockService.unlockForMinutes(challenge.rewardMinutes);
-            setState(() {
-              _usageState = _usageState.copyWith(
-                grantedMinutes:
-                    _usageState.grantedMinutes + challenge.rewardMinutes,
-                extensionCountToday: _usageState.extensionCountToday + 1,
-                totalCorrectToday: _usageState.totalCorrectToday + correctCount,
-              );
-            });
+            final updated = _usageState.copyWith(
+              grantedMinutes:
+                  _usageState.grantedMinutes + challenge.rewardMinutes,
+              extensionCountToday: _usageState.extensionCountToday + 1,
+              totalCorrectToday: _usageState.totalCorrectToday + correctCount,
+            );
+            await _storage.saveUsageState(updated);
+            setState(() => _usageState = updated);
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Chúc mừng! Bé đã nhận thêm +${challenge.rewardMinutes} phút!',
+                    'Chúc mừng ${_profile.name}! Bé đã nhận thêm +${challenge.rewardMinutes} phút!',
                   ),
                 ),
               );
@@ -125,17 +131,19 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
         builder: (_) => ParentDashboardScreen(
           profile: _profile,
           usageState: _usageState,
-          onSaveProfile: (updated) {
+          onSaveProfile: (updated) async {
+            await _storage.saveProfile(updated);
+            _curriculumService.resetSessionHistory();
             setState(() => _profile = updated);
-            _lockService.startMonitoring(updated.blockedPackages);
+            await _lockService.startMonitoring(updated.blockedPackages);
           },
-          onSimulateTimeUp: () {
-            setState(() {
-              _usageState = _usageState.copyWith(
-                usedMinutes: _usageState.grantedMinutes,
-              );
-            });
-            Navigator.of(context).pop();
+          onSimulateTimeUp: () async {
+            final updated = _usageState.copyWith(
+              usedMinutes: _usageState.grantedMinutes,
+            );
+            await _storage.saveUsageState(updated);
+            setState(() => _usageState = updated);
+            if (mounted) Navigator.of(context).pop();
           },
           onRequestPermissions: () => _lockService.requestRequiredPermissions(),
         ),
@@ -145,6 +153,13 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_loaded) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFFFF8EE),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     _usageState = _escalationEngine.ensureFreshDay(_usageState, _profile);
     final challenge = _escalationEngine.nextChallenge(_usageState, _profile);
 
@@ -152,6 +167,13 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
       profile: _profile,
       usageState: _usageState,
       nextChallenge: challenge,
+      isMuted: _audioGuide.isMuted,
+      onToggleMute: () {
+        setState(() {
+          _audioGuide.isMuted = !_audioGuide.isMuted;
+        });
+        if (_audioGuide.isMuted) _audioGuide.stop();
+      },
       onStartQuiz: _startExtensionQuiz,
       onOpenParentGate: _openParentDashboard,
       onSpeakWelcome: () => _audioGuide.speak(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/models/child_profile.dart';
 import '../../core/models/daily_usage_state.dart';
 import '../../core/services/escalation_engine.dart';
+import '../../core/widgets/animated_owl_mascot.dart';
 
 class LockScreen extends StatelessWidget {
   const LockScreen({
@@ -9,6 +10,8 @@ class LockScreen extends StatelessWidget {
     required this.profile,
     required this.usageState,
     required this.nextChallenge,
+    required this.isMuted,
+    required this.onToggleMute,
     required this.onStartQuiz,
     required this.onOpenParentGate,
     required this.onSpeakWelcome,
@@ -17,6 +20,8 @@ class LockScreen extends StatelessWidget {
   final ChildProfile profile;
   final DailyUsageState usageState;
   final ExtensionChallenge nextChallenge;
+  final bool isMuted;
+  final VoidCallback onToggleMute;
   final VoidCallback onStartQuiz;
   final VoidCallback onOpenParentGate;
   final VoidCallback onSpeakWelcome;
@@ -38,36 +43,33 @@ class LockScreen extends StatelessWidget {
                   Chip(
                     avatar: const Icon(Icons.school_rounded, size: 18),
                     label: Text(
-                      'Lớp ${profile.grade} • Tuần ${profile.currentWeek}',
+                      '${profile.name} (${profile.age}t) • Lớp ${profile.grade} • Tuần ${profile.currentWeek}',
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
-                  IconButton.filledTonal(
-                    onPressed: onOpenParentGate,
-                    tooltip: 'Cổng phụ huynh',
-                    icon: const Icon(Icons.admin_panel_settings_rounded),
+                  Row(
+                    children: [
+                      IconButton.filledTonal(
+                        onPressed: onToggleMute,
+                        tooltip: isMuted ? 'Bật âm thanh' : 'Tắt âm thanh',
+                        icon: Icon(
+                          isMuted
+                              ? Icons.volume_off_rounded
+                              : Icons.volume_up_rounded,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filledTonal(
+                        onPressed: onOpenParentGate,
+                        tooltip: 'Cổng phụ huynh',
+                        icon: const Icon(Icons.admin_panel_settings_rounded),
+                      ),
+                    ],
                   ),
                 ],
               ),
               const Spacer(),
-              Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFE4B5),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.orange.withValues(alpha: 0.2),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text('🦉', style: TextStyle(fontSize: 72)),
-                ),
-              ),
+              const AnimatedOwlMascot(mood: OwlMood.idle, size: 140),
               const SizedBox(height: 24),
               Text(
                 capReached
@@ -117,7 +119,7 @@ class LockScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: OutlinedButton.icon(
                     onPressed: onSpeakWelcome,
-                    icon: const Icon(Icons.volume_up_rounded, size: 28),
+                    icon: const Icon(Icons.hearing_rounded, size: 28),
                     label: const Text(
                       'Nghe bạn Cú hướng dẫn',
                       style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),

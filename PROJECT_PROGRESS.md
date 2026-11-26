@@ -32,8 +32,9 @@
 ## Giai đoạn 3: Thuật toán Đổi giờ & Dữ liệu GDPT 2018 Thời gian thực
 - [x] Xây dựng `EscalationEngine` (tăng dần số câu & độ khó qua từng lượt xin thêm giờ trong ngày, tự động reset lúc `00:00`)
 - [x] Xây dựng `CurriculumService` (tính tuần học thực tế theo năm học, lọc theo Lớp 1–5 & 3 bộ sách: *Kết nối tri thức*, *Chân trời sáng tạo*, *Cánh Diều*)
-- [x] Tạo bộ dữ liệu câu hỏi mẫu `assets/data/sample_questions.json` (Lớp 1 & Lớp 3)
-- [ ] Xây dựng bộ sinh biến thể Toán học (Template Engine) để đổi số ngẫu nhiên, tránh trẻ học vẹt đáp án
+- [x] Tạo bộ dữ liệu câu hỏi mẫu `assets/data/sample_questions.json` cho cả 5 khối lớp (Lớp 1–5) với nhiều dạng bài (`visual_count`, `compare_math`, `true_false`, `multiple_choice`, `fill_number`)
+- [x] Xây dựng bộ sinh câu hỏi Toán & Logic động theo từng lớp trong `CurriculumService` kèm cơ chế chống trùng lặp câu hỏi trong phiên/ngày (`_askedPromptsInSession`)
+- [x] Lưu trữ bền vững hồ sơ bé (tên, tuổi, lớp, bộ sách, mã PIN) và trạng thái sử dụng trong ngày bằng `StorageService` (`shared_preferences`)
 - [ ] Chuẩn hóa đầy đủ ngân hàng câu hỏi 35 tuần học cho cả 5 khối lớp và đồng bộ từ Cloud (Supabase/Firebase) + Offline Cache (SQLite)
 - [ ] `[+]` **Cải tiến:** Tích hợp AI tạo giải thích gợi ý thông minh hoặc câu đố vui theo chủ đề ngày lễ/mùa trong năm.
 
@@ -42,9 +43,13 @@
 - [x] Màn hình Làm bài (`QuizScreen`) hỗ trợ nút lớn cho trẻ nhỏ, gợi ý nhẹ nhàng khi làm sai, không phạt nặng
 - [x] Khung `AudioGuideService` đọc câu hỏi/hướng dẫn cho trẻ Lớp 1–2
 - [x] Cổng Phụ huynh (`ParentGateDialog`) bảo vệ bằng PIN/phép tính và `ParentDashboardScreen`
+- [x] Nhân vật Cú mèo chuyển động (`AnimatedOwlMascot`: nhún thở, nhảy mừng khi đúng, lắc nhẹ khích lệ khi sai)
+- [x] Hiệu ứng phản hồi khi trả lời (rung nhẹ + gợi ý khi sai, phóng to + đổi màu xanh khi đúng, đếm chuỗi combo `🔥`)
+- [x] Hiệu ứng âm thanh `.wav` (`correct.wav`, `wrong.wav`, `unlock.wav`) kết hợp giọng đọc tiếng Việt (`AudioGuideService`) và nút tắt/bật âm thanh
+- [x] Cho phép phụ huynh sửa trực tiếp Tên, Tuổi, Lớp, Bộ sách, Tuần học, Quỹ giờ và Mã PIN trong `ParentDashboardScreen`
 - [ ] Thu âm hoặc tạo sẵn file MP3 giọng đọc tiếng Việt tự nhiên cho toàn bộ câu hỏi Lớp 1–2 (tránh giọng TTS mặc định bị khô cứng)
-- [ ] Thêm dạng bài kéo-thả, nối hình, điền số trực quan thay vì chỉ chọn đáp án
-- [ ] Thêm nhạc nền nhẹ nhàng (có nút tắt/bật) và hiệu ứng âm thanh/pháo hoa khi trả lời đúng
+- [ ] Thêm dạng bài kéo-thả, nối hình trực quan
+- [ ] Thêm nhạc nền nhẹ nhàng (có nút tắt/bật)
 - [ ] `[+]` **Cải tiến:** Thêm hệ thống nuôi thú cưng/nhân vật đồng hành và bảng thành tích cho khối Lớp 3–5.
 
 ## Giai đoạn 5: Kiểm thử thực tế & Phát hành

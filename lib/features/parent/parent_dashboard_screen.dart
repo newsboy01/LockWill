@@ -23,6 +23,9 @@ class ParentDashboardScreen extends StatefulWidget {
 }
 
 class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _pinController;
+  late int _age;
   late int _grade;
   late TextbookSeries _textbook;
   late int _week;
@@ -32,6 +35,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _nameController = TextEditingController(text: widget.profile.name);
+    _pinController = TextEditingController(text: widget.profile.parentPin);
+    _age = widget.profile.age;
     _grade = widget.profile.grade;
     _textbook = widget.profile.textbook;
     _week = widget.profile.currentWeek;
@@ -40,10 +46,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _pinController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bảng điều khiển Phụ huynh'),
+        title: const Text('Hồ sơ Bé & Cài đặt Phụ huynh'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -55,7 +68,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Hồ sơ: ${widget.profile.name}',
+                    'Thống kê hôm nay: ${widget.profile.name} (${widget.profile.age} tuổi)',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -63,12 +76,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Đã dùng hôm nay: ${widget.usageState.usedMinutes}/${widget.usageState.grantedMinutes} phút '
-                    '(Đã gia hạn ${widget.usageState.extensionCountToday} lần)',
+                    'Đã dùng: ${widget.usageState.usedMinutes}/${widget.usageState.grantedMinutes} phút '
+                    '• Gia hạn: ${widget.usageState.extensionCountToday} lần '
+                    '• Trả lời đúng: ${widget.usageState.totalCorrectToday} câu',
                   ),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 10,
+                    runSpacing: 8,
                     children: [
                       OutlinedButton.icon(
                         onPressed: widget.onRequestPermissions,
@@ -88,20 +103,51 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Thiết lập giáo trình thực tế (GDPT 2018)',
+            'Thông tin hồ sơ của bé',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<int>(
-            value: _grade,
+          const SizedBox(height: 10),
+          TextField(
+            controller: _nameController,
             decoration: const InputDecoration(
-              labelText: 'Lớp học hiện tại',
+              labelText: 'Tên gọi của bé',
+              prefixIcon: Icon(Icons.child_care_rounded),
               border: OutlineInputBorder(),
             ),
-            items: [1, 2, 3, 4, 5]
-                .map((g) => DropdownMenuItem(value: g, child: Text('Lớp $g')))
-                .toList(),
-            onChanged: (v) => setState(() => _grade = v ?? 1),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: _age.clamp(6, 11),
+                  decoration: const InputDecoration(
+                    labelText: 'Tuổi',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [6, 7, 8, 9, 10, 11]
+                      .map((a) =>
+                          DropdownMenuItem(value: a, child: Text('$a tuổi')))
+                      .toList(),
+                  onChanged: (v) => setState(() => _age = v ?? 6),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: _grade.clamp(1, 5),
+                  decoration: const InputDecoration(
+                    labelText: 'Lớp học',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [1, 2, 3, 4, 5]
+                      .map((g) =>
+                          DropdownMenuItem(value: g, child: Text('Lớp $g')))
+                      .toList(),
+                  onChanged: (v) => setState(() => _grade = v ?? 1),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<TextbookSeries>(
@@ -156,21 +202,38 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             label: '$_maxMinutes phút',
             onChanged: (v) => setState(() => _maxMinutes = v.round()),
           ),
-          const SizedBox(height: 16),
-          FilledButton(
+          const SizedBox(height: 8),
+          TextField(
+            controller: _pinController,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            decoration: const InputDecoration(
+              labelText: 'Mã PIN Phụ huynh',
+              prefixIcon: Icon(Icons.lock_rounded),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
             onPressed: () {
+              final cleanName = _nameController.text.trim();
+              final cleanPin = _pinController.text.trim();
               widget.onSaveProfile(
                 widget.profile.copyWith(
+                  name: cleanName.isEmpty ? 'Bé' : cleanName,
+                  age: _age,
                   grade: _grade,
                   textbook: _textbook,
                   currentWeek: _week,
                   dailyBaseMinutes: _baseMinutes,
                   dailyMaxMinutes: _maxMinutes,
+                  parentPin: cleanPin.isEmpty ? '1234' : cleanPin,
                 ),
               );
               Navigator.of(context).pop();
             },
-            child: const Text('Lưu cấu hình'),
+            icon: const Icon(Icons.save_rounded),
+            label: const Text('Lưu hồ sơ & cấu hình'),
           ),
         ],
       ),

@@ -18,6 +18,7 @@ enum TextbookSeries {
 class ChildProfile {
   const ChildProfile({
     required this.name,
+    required this.age,
     required this.grade,
     required this.textbook,
     required this.currentWeek,
@@ -31,6 +32,7 @@ class ChildProfile {
   });
 
   final String name;
+  final int age; // 6..11
   final int grade; // 1..5
   final TextbookSeries textbook;
   final int currentWeek; // 1..35
@@ -44,6 +46,7 @@ class ChildProfile {
 
   ChildProfile copyWith({
     String? name,
+    int? age,
     int? grade,
     TextbookSeries? textbook,
     int? currentWeek,
@@ -54,6 +57,7 @@ class ChildProfile {
   }) {
     return ChildProfile(
       name: name ?? this.name,
+      age: age ?? this.age,
       grade: grade ?? this.grade,
       textbook: textbook ?? this.textbook,
       currentWeek: currentWeek ?? this.currentWeek,
@@ -61,6 +65,35 @@ class ChildProfile {
       dailyMaxMinutes: dailyMaxMinutes ?? this.dailyMaxMinutes,
       parentPin: parentPin ?? this.parentPin,
       blockedPackages: blockedPackages ?? this.blockedPackages,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'age': age,
+        'grade': grade,
+        'textbook': textbook.code,
+        'currentWeek': currentWeek,
+        'dailyBaseMinutes': dailyBaseMinutes,
+        'dailyMaxMinutes': dailyMaxMinutes,
+        'parentPin': parentPin,
+        'blockedPackages': blockedPackages,
+      };
+
+  factory ChildProfile.fromJson(Map<String, dynamic> json) {
+    return ChildProfile(
+      name: (json['name'] as String?) ?? 'Bé Minh',
+      age: (json['age'] as int?) ?? 6,
+      grade: (json['grade'] as int?) ?? 1,
+      textbook: TextbookSeries.fromCode((json['textbook'] as String?) ?? ''),
+      currentWeek: (json['currentWeek'] as int?) ?? 12,
+      dailyBaseMinutes: (json['dailyBaseMinutes'] as int?) ?? 30,
+      dailyMaxMinutes: (json['dailyMaxMinutes'] as int?) ?? 90,
+      parentPin: (json['parentPin'] as String?) ?? '1234',
+      blockedPackages: List<String>.from(
+        (json['blockedPackages'] as List<dynamic>?) ??
+            const ['com.google.android.youtube', 'com.zhiliaoapp.musically'],
+      ),
     );
   }
 }
