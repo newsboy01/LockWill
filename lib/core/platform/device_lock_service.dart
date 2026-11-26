@@ -27,6 +27,8 @@ abstract class DeviceLockService {
   Future<void> stopMonitoring();
   Future<void> lockDeviceApps();
   Future<void> unlockForMinutes(int minutes);
+  Future<int> getRemainingUnlockSeconds();
+  Future<bool> launchApp(String packageName);
   Future<List<InstalledAppInfo>> getInstalledApps();
   Future<Map<String, dynamic>> getUsageHistory();
   Future<Map<String, String>> getDeviceInfo();
@@ -173,6 +175,29 @@ class MethodChannelDeviceLockService implements DeviceLockService {
       // Safe fallback.
     } on MissingPluginException {
       // Safe fallback.
+    }
+  }
+
+  @override
+  Future<int> getRemainingUnlockSeconds() async {
+    if (kIsWeb) return 0;
+    try {
+      return (await _channel.invokeMethod<int>('getRemainingUnlockSeconds')) ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  @override
+  Future<bool> launchApp(String packageName) async {
+    if (kIsWeb) return false;
+    try {
+      return (await _channel.invokeMethod<bool>('launchApp', {
+            'packageName': packageName,
+          })) ??
+          false;
+    } catch (_) {
+      return false;
     }
   }
 

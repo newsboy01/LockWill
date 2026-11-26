@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/models/child_profile.dart';
 import 'core/models/daily_usage_state.dart';
@@ -11,6 +13,7 @@ import 'features/lock_screen/lock_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/parent/parent_dashboard_screen.dart';
 import 'features/parent/parent_gate_dialog.dart';
+import 'features/quiz/celebration_dialog.dart';
 import 'features/quiz/quiz_screen.dart';
 
 void main() {
@@ -53,7 +56,8 @@ class LockWillHomeController extends StatefulWidget {
   State<LockWillHomeController> createState() => _LockWillHomeControllerState();
 }
 
-class _LockWillHomeControllerState extends State<LockWillHomeController> {
+class _LockWillHomeControllerState extends State<LockWillHomeController>
+    with WidgetsBindingObserver {
   final DeviceLockService _lockService = MethodChannelDeviceLockService();
   final EscalationEngine _escalationEngine = EscalationEngine();
   final CurriculumService _curriculumService = CurriculumService();
@@ -65,11 +69,33 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
   bool _needsOnboarding = false;
   late ChildProfile _profile;
   late DailyUsageState _usageState;
+  int _remainingSeconds = 0;
+  List<InstalledAppInfo> _unlockedApps = const [];
+  Timer? _syncTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _syncTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _loaded) {
+      _refreshRemainingSeconds();
+      _reportService.flushPendingQueue(
+        profile: _profile,
+        deviceLockService: _lockService,
+      );
+    }
   }
 
   Future<void> _initData() async {
@@ -77,10 +103,8 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
     final profile = await _storage.loadProfile();
     await _audioGuide.applyProfileSettings(profile);
     await _audioGuide.setBgmEnabled(profile.bgmEnabled);
-    // Tự động kiểm tra và cập nhật bộ câu hỏi mới nhất từ GitHub chạy nền.
     _curriculumService.syncQuestionsFromGitHub(profile.githubRepo);
 
-    // Nếu đã cấp quyền Android, tự động kích hoạt dịch vụ giám sát & khóa app ngay khi mở máy.
     final hasPerm = await _lockService.hasRequiredPermissions();
     if (hasPerm && profile.blockedPackages.isNotEmpty) {
       await _lockService.startMonitoring(profile.blockedPackages);
@@ -92,14 +116,69 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
       _curriculumService.resetSessionHistory();
       await _storage.saveUsageState(fresh);
       usage = fresh;
+      // Sang ngày mới tự động nạp quỹ miễn phí đầu ngày xuống Android Native.
+      if (profile.dailyBaseMinutes > 0) {
+        await _lockService.unlockForMinutes(profile.dailyBaseMinutes);
+      }
     }
+
+    final rem = await _lockService.getRemainingUnlockSeconds();
+    final apps = await _resolveBlockedAppInfos(profile.blockedPackages);
+
+    // Tự động đẩy bù các phiên học lưu offline lên GitHub nếu đã có mạng.
+    _reportService.flushPendingQueue(
+      profile: profile,
+      deviceLockService: _lockService,
+    );
+
     if (!mounted) return;
     setState(() {
       _profile = profile;
       _usageState = usage;
+      _remainingSeconds = rem;
+      _unlockedApps = apps;
       _needsOnboarding = !onboarded;
       _loaded = true;
     });
+
+    _syncTimer?.cancel();
+    _syncTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _refreshRemainingSeconds();
+    });
+  }
+
+  Future<void> _refreshRemainingSeconds() async {
+    if (!mounted || !_loaded) return;
+    if (kIsWeb) {
+      if (_remainingSeconds > 0) {
+        setState(() {
+          _remainingSeconds = (_remainingSeconds - 2).clamp(0, 86400);
+        });
+      }
+      return;
+    }
+    final rem = await _lockService.getRemainingUnlockSeconds();
+    if (mounted && rem != _remainingSeconds) {
+      setState(() => _remainingSeconds = rem);
+    }
+  }
+
+  Future<List<InstalledAppInfo>> _resolveBlockedAppInfos(
+      List<String> packages) async {
+    final installed = await _lockService.getInstalledApps();
+    final byPkg = {for (final a in installed) a.packageName: a};
+    return packages.map((pkg) {
+      final found = byPkg[pkg];
+      if (found != null) return found;
+      final fallbackName = pkg.contains('youtube')
+          ? 'YouTube'
+          : (pkg.contains('tiktok') ||
+                  pkg.contains('trill') ||
+                  pkg.contains('musically')
+              ? 'TikTok'
+              : pkg.split('.').last);
+      return InstalledAppInfo(packageName: pkg, appName: fallbackName);
+    }).toList();
   }
 
   Future<void> _startExtensionQuiz() async {
@@ -139,13 +218,21 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
             );
             await _storage.saveProfile(updatedProfile);
             await _storage.saveUsageState(updated);
+
+            final nextRem = kIsWeb
+                ? _remainingSeconds + challenge.rewardMinutes * 60
+                : await _lockService.getRemainingUnlockSeconds();
+
             setState(() {
               _profile = updatedProfile;
               _usageState = updated;
+              _remainingSeconds = nextRem > 0
+                  ? nextRem
+                  : challenge.rewardMinutes * 60;
             });
 
-            // Lưu & tự đồng bộ báo cáo học tập + lịch sử sử dụng máy lên GitHub.
-            await _reportService.recordAndSyncSession(
+            // Lưu & tự đồng bộ báo cáo học tập + lịch sử sử dụng máy lên GitHub (kèm Offline Queue).
+            _reportService.recordAndSyncSession(
               profile: updatedProfile,
               deviceLockService: _lockService,
               totalQuestions: summary.totalQuestions,
@@ -155,12 +242,21 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
               subjectBreakdown: summary.subjectBreakdown,
             );
 
+            _audioGuide.speak(
+              'Chúc mừng ${updatedProfile.name}! Con thật xuất sắc, đã được thưởng thêm ${challenge.rewardMinutes} phút và mở khóa ứng dụng giải trí rồi!',
+            );
+
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Chúc mừng ${_profile.name}! Nhận +${challenge.rewardMinutes} phút & +$earnedStars ⭐!',
-                  ),
+              await showDialog<void>(
+                context: context,
+                barrierDismissible: true,
+                builder: (_) => CelebrationDialog(
+                  childName: updatedProfile.name,
+                  owlAccessory: updatedProfile.owlAccessory,
+                  rewardMinutes: challenge.rewardMinutes,
+                  earnedStars: earnedStars,
+                  unlockedApps: _unlockedApps,
+                  onLaunchApp: (pkg) => _lockService.launchApp(pkg),
                 ),
               );
             }
@@ -188,7 +284,11 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
             await _storage.saveProfile(updated);
             await _audioGuide.applyProfileSettings(updated);
             _curriculumService.resetSessionHistory();
-            setState(() => _profile = updated);
+            final apps = await _resolveBlockedAppInfos(updated.blockedPackages);
+            setState(() {
+              _profile = updated;
+              _unlockedApps = apps;
+            });
             await _lockService.startMonitoring(updated.blockedPackages);
           },
           onSimulateTimeUp: () async {
@@ -197,7 +297,10 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
               usedMinutes: _usageState.grantedMinutes,
             );
             await _storage.saveUsageState(updated);
-            setState(() => _usageState = updated);
+            setState(() {
+              _usageState = updated;
+              _remainingSeconds = 0;
+            });
             if (mounted) Navigator.of(context).pop();
           },
           onRequestPermissions: () => _lockService.requestRequiredPermissions(),
@@ -217,7 +320,8 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
 
   Future<void> _cycleOwlAccessory() async {
     const order = ['grad_cap', 'glasses', 'crown', 'none'];
-    final next = order[(order.indexOf(_profile.owlAccessory) + 1) % order.length];
+    final next =
+        order[(order.indexOf(_profile.owlAccessory) + 1) % order.length];
     final updated = _profile.copyWith(owlAccessory: next);
     await _storage.saveProfile(updated);
     setState(() => _profile = updated);
@@ -240,8 +344,11 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
           await _storage.markOnboardingCompleted();
           await _audioGuide.applyProfileSettings(configuredProfile);
           _curriculumService.resetSessionHistory();
+          final apps =
+              await _resolveBlockedAppInfos(configuredProfile.blockedPackages);
           setState(() {
             _profile = configuredProfile;
+            _unlockedApps = apps;
             _needsOnboarding = false;
           });
         },
@@ -255,6 +362,8 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
       profile: _profile,
       usageState: _usageState,
       nextChallenge: challenge,
+      remainingSeconds: _remainingSeconds,
+      unlockedApps: _unlockedApps,
       isMuted: _audioGuide.isMuted,
       bgmEnabled: _profile.bgmEnabled,
       onToggleMute: () {
@@ -275,6 +384,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
         setState(() => _profile = updated);
       },
       onCycleAccessory: _cycleOwlAccessory,
+      onLaunchApp: (pkg) => _lockService.launchApp(pkg),
       onStartQuiz: _startExtensionQuiz,
       onOpenParentGate: _openParentDashboard,
       onSpeakWelcome: () => _audioGuide.speak(

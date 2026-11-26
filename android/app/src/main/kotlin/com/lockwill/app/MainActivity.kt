@@ -72,7 +72,22 @@ class MainActivity : FlutterActivity() {
                     "unlockForMinutes" -> {
                         val minutes = call.argument<Int>("minutes") ?: 15
                         UsageMonitorService.grantMinutes(this, minutes)
+                        LockOverlayManager.hideOverlay(this)
                         result.success(null)
+                    }
+                    "getRemainingUnlockSeconds" -> {
+                        result.success(UsageMonitorService.getRemainingSeconds(this).toInt())
+                    }
+                    "launchApp" -> {
+                        val pkg = call.argument<String>("packageName") ?: ""
+                        val launchIntent = packageManager.getLaunchIntentForPackage(pkg)
+                        if (launchIntent != null) {
+                            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(launchIntent)
+                            result.success(true)
+                        } else {
+                            result.success(false)
+                        }
                     }
                     "getUsageHistoryJson" -> {
                         result.success(UsageMonitorService.getUsageSummaryJson(this))

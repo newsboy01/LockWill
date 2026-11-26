@@ -52,6 +52,8 @@ class _QuizScreenState extends State<QuizScreen>
   int _streak = 0;
   bool _showHint = false;
   bool _isTransitioning = false;
+  bool _isWrongCooldown = false;
+  final Set<int> _disabledWrongIndices = <int>{};
   int? _wrongSelectedIndex;
   int? _correctSelectedIndex;
 
@@ -80,7 +82,18 @@ class _QuizScreenState extends State<QuizScreen>
 
   void _autoSpeakCurrent() {
     if (widget.profile.isAudioFirstGrade && widget.questions.isNotEmpty) {
-      widget.audioGuide.speak(widget.questions[_currentIndex].audioText);
+      _speakQuestionWithOptions(widget.questions[_currentIndex]);
+    }
+  }
+
+  void _speakQuestionWithOptions(Question q) {
+    if (widget.profile.isAudioFirstGrade &&
+        (q.type == 'multiple_choice' || q.type == 'true_false') &&
+        q.options.length <= 4) {
+      final joined = q.options.join(', ');
+      widget.audioGuide.speak('${q.audioText} Các đáp án là: $joined.');
+    } else {
+      widget.audioGuide.speak(q.audioText);
     }
   }
 
@@ -132,6 +145,8 @@ class _QuizScreenState extends State<QuizScreen>
       _owlMood = OwlMood.idle;
       _correctSelectedIndex = null;
       _wrongSelectedIndex = null;
+      _disabledWrongIndices.clear();
+      _isWrongCooldown = false;
       _typedNumber = '';
       _builtPieces.clear();
       _droppedAnswer = null;
@@ -141,7 +156,7 @@ class _QuizScreenState extends State<QuizScreen>
   }
 
   Future<void> _onWrongAnswer({int? selectedIndex}) async {
-    if (_isTransitioning) return;
+    if (_isTransitioning || _isWrongCooldown) return;
     final question = widget.questions[_currentIndex];
     final subjectKey = question.subject.split(' - ').first;
     final stats = _subjectBreakdown.putIfAbsent(
@@ -159,13 +174,23 @@ class _QuizScreenState extends State<QuizScreen>
       _owlMood = OwlMood.encourage;
       _showHint = true;
       _wrongSelectedIndex = selectedIndex;
+      _isWrongCooldown = true;
+      if (selectedIndex != null) {
+        _disabledWrongIndices.add(selectedIndex);
+      }
     });
 
     _shakeController.forward(from: 0);
     await widget.audioGuide.playWrongSound();
     await widget.audioGuide.speak(
-      'Chưa đúng rồi, mình thử lại nhé! ${question.hintText}',
+      'Chưa đúng rồi, mình nghe gợi ý rồi thử lại nhé! ${question.hintText}',
     );
+
+    // Tạm khóa nhẹ 1.5 giây để bé Lớp 1 nghe gợi ý thay vì bấm bừa liên thanh.
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    if (mounted) {
+      setState(() => _isWrongCooldown = false);
+    }
   }
 
   void _submitTypedNumber() {
@@ -325,9 +350,9 @@ class _QuizScreenState extends State<QuizScreen>
             ),
           ),
         IconButton.filledTonal(
-          onPressed: () => widget.audioGuide.speak(question.audioText),
+          onPressed: () => _speakQuestionWithOptions(question),
           icon: const Icon(Icons.volume_up_rounded, size: 26),
-          tooltip: 'Nghe lại câu hỏi',
+          tooltip: 'Nghe lại câu hỏi và đáp án',
         ),
       ],
     );
@@ -528,8 +553,10 @@ class _QuizScreenState extends State<QuizScreen>
     List<(Color, Color)> palette,
     ResponsiveLayout r,
   ) {
-    final isWrong = _wrongSelectedIndex == index;
+    final isWrong =
+        _wrongSelectedIndex == index || _disabledWrongIndices.contains(index);
     final isCorrect = _correctSelectedIndex == index;
+    final isDisabled = _isWrongCooldown || _disabledWrongIndices.contains(index);
     final baseColor = isCorrect
         ? const Color(0xFF2EC4B6)
         : (isWrong
@@ -551,13 +578,15 @@ class _QuizScreenState extends State<QuizScreen>
           horizontal: 12,
           vertical: r.isCompactPhone ? 10 : 14,
         ),
-        onPressed: () {
-          if (index == question.correctIndex) {
-            _onCorrectAnswer(selectedIndex: index);
-          } else {
-            _onWrongAnswer(selectedIndex: index);
-          }
-        },
+        onPressed: isDisabled
+            ? null
+            : () {
+                if (index == question.correctIndex) {
+                  _onCorrectAnswer(selectedIndex: index);
+                } else {
+                  _onWrongAnswer(selectedIndex: index);
+                }
+              },
         child: Text(
           question.options[index],
           textAlign: TextAlign.center,

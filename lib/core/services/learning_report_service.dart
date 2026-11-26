@@ -65,6 +65,7 @@ class LearningSessionReport {
 /// và đồng bộ lên GitHub (docs/reports/learning_data.json) cho trang Web Giám Sát Phụ Huynh.
 class LearningReportService {
   static const _localReportsKey = 'lockwill_learning_reports_v1';
+  static const _pendingSessionsKey = 'lockwill_pending_sync_sessions_v1';
   static const _remoteReportPath = 'docs/reports/learning_data.json';
 
   Future<List<Map<String, dynamic>>> loadLocalReports() async {
@@ -73,6 +74,58 @@ class LearningReportService {
     if (raw == null) return [];
     final list = jsonDecode(raw) as List<dynamic>;
     return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<void> _enqueuePendingSession(Map<String, dynamic> session) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_pendingSessionsKey);
+    final list = raw == null
+        ? <dynamic>[]
+        : List<dynamic>.from(jsonDecode(raw) as List<dynamic>);
+    list.add(session);
+    await prefs.setString(_pendingSessionsKey, jsonEncode(list));
+  }
+
+  /// Tự động đẩy bù toàn bộ phiên học đã lưu offline lên GitHub ngay khi có mạng.
+  Future<int> flushPendingQueue({
+    required ChildProfile profile,
+    required DeviceLockService deviceLockService,
+  }) async {
+    if (profile.githubToken.trim().isEmpty ||
+        !profile.githubRepo.trim().contains('/')) {
+      return 0;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_pendingSessionsKey);
+    if (raw == null) return 0;
+    final pending = List<Map<String, dynamic>>.from(
+      (jsonDecode(raw) as List<dynamic>)
+          .map((e) => Map<String, dynamic>.from(e as Map)),
+    );
+    if (pending.isEmpty) return 0;
+
+    final device = await deviceLockService.getDeviceInfo();
+    final usageSnapshot = await deviceLockService.getUsageHistory();
+    final remaining = <Map<String, dynamic>>[];
+    var synced = 0;
+
+    for (final session in pending) {
+      final ok = await _pushToGitHub(
+        repo: profile.githubRepo.trim(),
+        token: profile.githubToken.trim(),
+        newSession: session,
+        deviceMonitorRecord:
+            _buildDeviceMonitorRecord(profile, device, usageSnapshot),
+      );
+      if (ok) {
+        synced++;
+      } else {
+        remaining.add(session);
+      }
+    }
+
+    await prefs.setString(_pendingSessionsKey, jsonEncode(remaining));
+    return synced;
   }
 
   Future<bool> recordAndSyncSession({
@@ -117,12 +170,17 @@ class LearningReportService {
 
     if (profile.githubToken.trim().isNotEmpty &&
         profile.githubRepo.trim().contains('/')) {
-      return _pushToGitHub(
+      final ok = await _pushToGitHub(
         repo: profile.githubRepo.trim(),
         token: profile.githubToken.trim(),
         newSession: report.toJson(),
-        deviceMonitorRecord: _buildDeviceMonitorRecord(profile, device, usageSnapshot),
+        deviceMonitorRecord:
+            _buildDeviceMonitorRecord(profile, device, usageSnapshot),
       );
+      if (!ok) {
+        await _enqueuePendingSession(report.toJson());
+      }
+      return ok;
     }
     return false;
   }

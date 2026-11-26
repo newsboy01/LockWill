@@ -51,6 +51,9 @@
 - [x] Màn hình Làm bài (`QuizScreen`) hỗ trợ nút lớn cho trẻ nhỏ, gợi ý nhẹ nhàng khi làm sai, không phạt nặng
 - [x] Khung `AudioGuideService` đọc câu hỏi/hướng dẫn cho trẻ Lớp 1–2
 - [x] Cổng Phụ huynh (`ParentGateDialog`) bảo vệ bằng PIN/phép tính và `ParentDashboardScreen`
+- [x] Đồng bộ 2 chiều đồng hồ đếm ngược thời gian giải trí thật giữa Android Native và `LockScreen`, chế độ **Đang mở khóa** (nền xanh tươi + danh sách app mở khóa 🔓 bấm mở trực tiếp) và **Hộp thoại Chúc mừng 3D pháo hoa (`CelebrationDialog`)** sau khi làm xong bài
+- [x] Chống bấm bừa cho Lớp 1 (tạm khóa 1.5s & làm mờ nút chọn sai khi đọc gợi ý), đọc to cả đề lẫn các lựa chọn đáp án, và **Hàng đợi đồng bộ Offline (`Offline Sync Queue`)** tự đẩy bù lên GitHub khi có mạng lại
+- [x] Dọn sạch dữ liệu mẫu trên `learning_data.json` (chỉ giữ dữ liệu thật), thêm bộ lọc **Khoảng thời gian (Hôm nay / 7 ngày / 30 ngày / Tất cả)** và **Biểu đồ xu hướng học tập theo ngày** trên trang Giám Sát Phụ Huynh
 - [x] Chuẩn hóa Responsive UI/UX toàn bộ ứng dụng (`ResponsiveLayout`) cho điện thoại nhỏ, điện thoại lớn, máy tính bảng (Tablet) và xoay ngang (bố cục 2 cột trên Tablet ngang, chống tràn chữ/tràn khung, giới hạn `textScaler`, chuẩn hóa đơn vị `dp` cho màn hình khóa Overlay Android)
 - [x] Màn hình Thiết lập Lần Đầu (`OnboardingScreen`) khi mới cài app: nhập Tên bé, Tuổi, Kiến thức Lớp, Bộ sách, Tên Bố/Mẹ giám sát, Vị trí, Mã PIN để chọn lọc thư viện câu hỏi ngay từ đầu
 - [x] Mở rộng giới hạn trần tối đa mỗi ngày lên **480 phút (8 giờ)** và cho phép tùy chỉnh thời lượng mỗi lần gia hạn (`5–30 phút`) + số câu hỏi cơ bản tự động tỷ lệ theo thời lượng và tăng tiến dần theo lượt (giữ chuẩn kiến thức lớp hiện tại)

@@ -130,6 +130,15 @@
         <label for="fGrade">Lớp học</label>
         <select id="fGrade"><option value="ALL">Tất cả lớp (1–5)</option></select>
       </div>
+      <div>
+        <label for="fRange">Khoảng thời gian</label>
+        <select id="fRange">
+          <option value="ALL">Tất cả thời gian</option>
+          <option value="TODAY">Hôm nay</option>
+          <option value="7D">7 ngày qua</option>
+          <option value="30D">30 ngày qua</option>
+        </select>
+      </div>
     </section>
 
     <section class="kpi-grid">
@@ -156,9 +165,14 @@
         <div id="subjectBars">Đang tải...</div>
       </div>
       <div class="card" style="margin-bottom:0;">
-        <h2>🧠 Tự Động Đánh Giá & Gợi Ý Phụ Huynh</h2>
-        <div id="insightsBox">Đang phân tích...</div>
+        <h2>📈 Xu Hướng Học Tập Theo Từng Ngày</h2>
+        <div id="dailyTrendBars">Đang tải...</div>
       </div>
+    </section>
+
+    <section class="card">
+      <h2>🧠 Tự Động Đánh Giá & Gợi Ý Phụ Huynh</h2>
+      <div id="insightsBox">Đang phân tích...</div>
     </section>
 
     <section class="card">
@@ -247,6 +261,21 @@
       fillSelect('fDevice', merged.map(s => `${s.deviceBrand} ${s.deviceModel}`));
       fillSelect('fLocation', merged.map(s => s.location));
       fillSelect('fGrade', merged.map(s => String(s.grade)), 'Lớp ');
+      document.getElementById('fRange').onchange = render;
+    }
+
+    function matchDateRange(isoStr, range) {
+      if (range === 'ALL' || !isoStr) return true;
+      const dt = new Date(isoStr);
+      if (isNaN(dt.getTime())) return true;
+      const now = new Date();
+      if (range === 'TODAY') {
+        return dt.toDateString() === now.toDateString();
+      }
+      const diffDays = (now - dt) / (1000 * 60 * 60 * 24);
+      if (range === '7D') return diffDays <= 7;
+      if (range === '30D') return diffDays <= 30;
+      return true;
     }
 
     function matchFilter(item, c, d, l, g) {
@@ -261,8 +290,9 @@
       const d = document.getElementById('fDevice').value;
       const l = document.getElementById('fLocation').value;
       const g = document.getElementById('fGrade').value;
+      const range = document.getElementById('fRange').value;
 
-      const sessions = allSessions.filter(s => matchFilter(s, c, d, l, g));
+      const sessions = allSessions.filter(s => matchFilter(s, c, d, l, g) && matchDateRange(s.timestamp, range));
       const monitors = allMonitors.filter(m => matchFilter(m, c, d, l, g));
 
       // 1. Tổng hợp lịch sử dùng app
@@ -385,6 +415,32 @@
         }).join('');
       }
       insightsEl.innerHTML = insights.join('') || '<p style="color:#64748b">Đang chờ thêm dữ liệu để phân tích.</p>';
+
+      // 4b. Biểu đồ xu hướng số câu đúng theo từng ngày
+      const dailyMap = {};
+      sessions.forEach(s => {
+        const day = (s.timestamp || '').substring(0, 10);
+        if (!day) return;
+        if (!dailyMap[day]) dailyMap[day] = { total: 0, correct: 0 };
+        dailyMap[day].total += s.totalQuestions || 0;
+        dailyMap[day].correct += s.firstTryCorrect || 0;
+      });
+      const dailyEntries = Object.entries(dailyMap).sort((a, b) => a[0].localeCompare(b[0]));
+      const trendEl = document.getElementById('dailyTrendBars');
+      if (dailyEntries.length === 0) {
+        trendEl.innerHTML = '<p style="color:#64748b">Chưa có dữ liệu xu hướng theo ngày.</p>';
+      } else {
+        const maxQ = Math.max(...dailyEntries.map(e => e[1].total), 1);
+        trendEl.innerHTML = dailyEntries.map(([day, st]) => {
+          const pct = Math.max(8, Math.round((st.total / maxQ) * 100));
+          const accDay = st.total > 0 ? Math.round((st.correct / st.total) * 100) : 0;
+          return `
+            <div class="bar-row">
+              <div class="bar-head"><span>📅 ${day}</span><span>${st.correct}/${st.total} câu đúng ngay (${accDay}%)</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#2563eb;"></div></div>
+            </div>`;
+        }).join('');
+      }
 
       // 5. Bảng chi tiết app đã mở
       appRows.sort((a, b) => (b.app.seconds || 0) - (a.app.seconds || 0));
