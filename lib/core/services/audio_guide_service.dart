@@ -18,9 +18,11 @@ class VoiceOption {
 class AudioGuideService {
   final FlutterTts _tts = FlutterTts();
   final AudioPlayer _sfxPlayer = AudioPlayer();
+  final AudioPlayer _bgmPlayer = AudioPlayer();
 
   bool _initialized = false;
   bool isMuted = false;
+  bool bgmEnabled = false;
   double _speechRate = 0.45;
   double _speechPitch = 1.08;
   String _voiceName = '';
@@ -130,8 +132,20 @@ class AudioGuideService {
     await _sfxPlayer.play(AssetSource('audio/unlock.wav'));
   }
 
+  Future<void> setBgmEnabled(bool enabled) async {
+    bgmEnabled = enabled;
+    if (enabled && !isMuted) {
+      await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
+      await _bgmPlayer.setVolume(0.22);
+      await _bgmPlayer.play(AssetSource('audio/bgm_gentle.wav'));
+    } else {
+      await _bgmPlayer.stop();
+    }
+  }
+
   Future<void> stop() async {
     await _tts.stop();
     await _sfxPlayer.stop();
+    await _bgmPlayer.stop();
   }
 }

@@ -1,5 +1,44 @@
 {
-  "updatedAt": "2026-11-26T14:15:00+07:00",
+  "updatedAt": "2026-11-26T15:05:00+07:00",
+  "deviceMonitors": [
+    {
+      "deviceKey": "Bé Minh_Samsung_Galaxy Tab A9",
+      "childName": "Bé Minh",
+      "age": 6,
+      "grade": 1,
+      "location": "Quận 7, TP.HCM",
+      "deviceBrand": "Samsung",
+      "deviceModel": "Galaxy Tab A9",
+      "osVersion": "Android 14 (SDK 34)",
+      "currentApp": "YouTube Kids",
+      "lastSeenAt": "2026-11-26T14:58:00+07:00",
+      "remainingSeconds": 420,
+      "apps": [
+        { "packageName": "com.google.android.apps.youtube.kids", "appName": "YouTube Kids", "seconds": 1680, "isBlockedApp": true, "lastUsedAt": "2026-11-26T14:58:00+07:00" },
+        { "packageName": "com.lockwill.app", "appName": "LockWill", "seconds": 780, "isBlockedApp": false, "lastUsedAt": "2026-11-26T14:40:00+07:00" },
+        { "packageName": "com.roblox.client", "appName": "Roblox", "seconds": 600, "isBlockedApp": true, "lastUsedAt": "2026-11-26T11:45:00+07:00" },
+        { "packageName": "com.zing.zalo", "appName": "Zalo (Gọi bố mẹ)", "seconds": 240, "isBlockedApp": false, "lastUsedAt": "2026-11-26T12:15:00+07:00" }
+      ]
+    },
+    {
+      "deviceKey": "Bé An_Xiaomi_Redmi Note 13",
+      "childName": "Bé An",
+      "age": 8,
+      "grade": 3,
+      "location": "Cầu Giấy, Hà Nội",
+      "deviceBrand": "Xiaomi",
+      "deviceModel": "Redmi Note 13",
+      "osVersion": "Android 14 (SDK 34)",
+      "currentApp": "LockWill",
+      "lastSeenAt": "2026-11-26T14:35:00+07:00",
+      "remainingSeconds": 0,
+      "apps": [
+        { "packageName": "com.google.android.youtube", "appName": "YouTube", "seconds": 1500, "isBlockedApp": true, "lastUsedAt": "2026-11-26T14:20:00+07:00" },
+        { "packageName": "com.lockwill.app", "appName": "LockWill", "seconds": 900, "isBlockedApp": false, "lastUsedAt": "2026-11-26T14:35:00+07:00" },
+        { "packageName": "com.zhiliaoapp.musically", "appName": "TikTok", "seconds": 480, "isBlockedApp": true, "lastUsedAt": "2026-11-26T13:20:00+07:00" }
+      ]
+    }
+  ],
   "sessions": [
     {
       "id": "sess_demo_1",

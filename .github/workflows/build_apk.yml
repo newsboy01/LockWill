@@ -28,15 +28,22 @@ jobs:
       - name: Generate Android Gradle files and preserve custom code
         run: |
           rm -rf /tmp/lockwill_fresh /tmp/lockwill_custom
-          mkdir -p /tmp/lockwill_custom/kotlin
+          mkdir -p /tmp/lockwill_custom/kotlin /tmp/lockwill_custom/xml
           cp android/app/src/main/AndroidManifest.xml /tmp/lockwill_custom/
           cp -r android/app/src/main/kotlin/com/lockwill/app /tmp/lockwill_custom/kotlin/
+          if [ -d "android/app/src/main/res/xml" ]; then
+            cp -r android/app/src/main/res/xml/* /tmp/lockwill_custom/xml/
+          fi
 
           flutter create /tmp/lockwill_fresh --org com.lockwill --project-name lockwill --platforms=android
 
           rm -rf android
           cp -r /tmp/lockwill_fresh/android ./android
           cp /tmp/lockwill_custom/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+          mkdir -p android/app/src/main/res/xml
+          if [ "$(ls -A /tmp/lockwill_custom/xml 2>/dev/null)" ]; then
+            cp -r /tmp/lockwill_custom/xml/* android/app/src/main/res/xml/
+          fi
           rm -rf android/app/src/main/kotlin/com/lockwill/lockwill
           mkdir -p android/app/src/main/kotlin/com/lockwill
           cp -r /tmp/lockwill_custom/kotlin/app android/app/src/main/kotlin/com/lockwill/

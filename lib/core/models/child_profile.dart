@@ -49,6 +49,9 @@ class ChildProfile {
     this.location = 'Việt Nam',
     this.githubRepo = 'newsboy01/LockWill',
     this.githubToken = '',
+    this.stars = 0,
+    this.owlAccessory = 'grad_cap',
+    this.bgmEnabled = false,
     this.blockedPackages = const [
       'com.google.android.youtube',
       'com.zhiliaoapp.musically',
@@ -75,6 +78,11 @@ class ChildProfile {
   final String githubRepo;
   final String githubToken;
 
+  /// Gamification: tích sao đổi phụ kiện Cú mèo 3D và nhạc nền dịu nhẹ.
+  final int stars;
+  final String owlAccessory; // none | grad_cap | glasses | crown
+  final bool bgmEnabled;
+
   final List<String> blockedPackages;
 
   /// Khối lớp nhỏ (1-2) cần giao diện nút siêu lớn và ưu tiên giọng đọc (Audio-First).
@@ -96,6 +104,9 @@ class ChildProfile {
     String? location,
     String? githubRepo,
     String? githubToken,
+    int? stars,
+    String? owlAccessory,
+    bool? bgmEnabled,
     List<String>? blockedPackages,
   }) {
     return ChildProfile(
@@ -114,6 +125,9 @@ class ChildProfile {
       location: location ?? this.location,
       githubRepo: githubRepo ?? this.githubRepo,
       githubToken: githubToken ?? this.githubToken,
+      stars: stars ?? this.stars,
+      owlAccessory: owlAccessory ?? this.owlAccessory,
+      bgmEnabled: bgmEnabled ?? this.bgmEnabled,
       blockedPackages: blockedPackages ?? this.blockedPackages,
     );
   }
@@ -134,6 +148,9 @@ class ChildProfile {
         'location': location,
         'githubRepo': githubRepo,
         'githubToken': githubToken,
+        'stars': stars,
+        'owlAccessory': owlAccessory,
+        'bgmEnabled': bgmEnabled,
         'blockedPackages': blockedPackages,
       };
 
@@ -154,6 +171,9 @@ class ChildProfile {
       location: (json['location'] as String?) ?? 'Việt Nam',
       githubRepo: (json['githubRepo'] as String?) ?? 'newsboy01/LockWill',
       githubToken: (json['githubToken'] as String?) ?? '',
+      stars: (json['stars'] as int?) ?? 0,
+      owlAccessory: (json['owlAccessory'] as String?) ?? 'grad_cap',
+      bgmEnabled: (json['bgmEnabled'] as bool?) ?? false,
       blockedPackages: List<String>.from(
         (json['blockedPackages'] as List<dynamic>?) ??
             const ['com.google.android.youtube', 'com.zhiliaoapp.musically'],

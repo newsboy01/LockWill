@@ -12,7 +12,10 @@ class LockScreen extends StatelessWidget {
     required this.usageState,
     required this.nextChallenge,
     required this.isMuted,
+    required this.bgmEnabled,
     required this.onToggleMute,
+    required this.onToggleBgm,
+    required this.onCycleAccessory,
     required this.onStartQuiz,
     required this.onOpenParentGate,
     required this.onSpeakWelcome,
@@ -22,7 +25,10 @@ class LockScreen extends StatelessWidget {
   final DailyUsageState usageState;
   final ExtensionChallenge nextChallenge;
   final bool isMuted;
+  final bool bgmEnabled;
   final VoidCallback onToggleMute;
+  final VoidCallback onToggleBgm;
+  final VoidCallback onCycleAccessory;
   final VoidCallback onStartQuiz;
   final VoidCallback onOpenParentGate;
   final VoidCallback onSpeakWelcome;
@@ -73,6 +79,16 @@ class LockScreen extends StatelessWidget {
                     Row(
                       children: [
                         IconButton.filledTonal(
+                          onPressed: onToggleBgm,
+                          tooltip: bgmEnabled ? 'Tắt nhạc nền' : 'Bật nhạc nền',
+                          icon: Icon(
+                            bgmEnabled
+                                ? Icons.music_note_rounded
+                                : Icons.music_off_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton.filledTonal(
                           onPressed: onToggleMute,
                           tooltip: isMuted ? 'Bật âm thanh' : 'Tắt âm thanh',
                           icon: Icon(
@@ -91,8 +107,35 @@ class LockScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3B0),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      '⭐ ${profile.stars} Sao thưởng • Chạm bạn Cú để đổi phụ kiện!',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        color: Color(0xFF92400E),
+                      ),
+                    ),
+                  ),
+                ),
                 const Spacer(),
-                const AnimatedOwlMascot(mood: OwlMood.idle, size: 165),
+                GestureDetector(
+                  onTap: onCycleAccessory,
+                  child: AnimatedOwlMascot(
+                    mood: OwlMood.idle,
+                    size: 165,
+                    accessory: profile.owlAccessory,
+                  ),
+                ),
                 const SizedBox(height: 18),
                 Text(
                   capReached

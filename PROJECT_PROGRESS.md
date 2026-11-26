@@ -24,7 +24,11 @@
 
 ## Giai đoạn 2: Cơ chế Khóa Thiết bị & Đếm Giờ (Android Native)
 - [x] Khai báo đầy đủ quyền trong `AndroidManifest.xml` (`PACKAGE_USAGE_STATS`, `SYSTEM_ALERT_WINDOW`, `FOREGROUND_SERVICE_SPECIAL_USE`, `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `QUERY_ALL_PACKAGES`)
-- [x] Hoàn thiện `UsageMonitorService.kt` chạy Foreground Service bền bỉ (có Notification hiển thị trạng thái khóa/phút còn lại, lưu trạng thái xuống `SharedPreferences`, dùng `UsageEvents` phát hiện chuyển app theo thời gian thực)
+- [x] Hoàn thiện `UsageMonitorService.kt` nâng cấp **Active Usage Timer** (chỉ trừ giây khi màn hình bật & bé đang mở app bị khóa; bảo lưu thời gian khi tắt máy) + **App Usage Tracker** ghi nhận đầy đủ app con đang mở, thời điểm mở và thời lượng dùng từng app
+- [x] Thêm `LockWillAdminReceiver.kt` (`DeviceAdminReceiver`) chống trẻ tự gỡ cài đặt app + nút 1 chạm xin **Bỏ qua tối ưu hóa pin** (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`)
+- [x] Thêm Gamification: tích **Sao thưởng (`⭐`)**, đổi phụ kiện bạn Cú mèo 3D (`Mũ cử nhân`, `Kính thông minh`, `Vương miện`) và nhạc nền êm dịu (`bgm_gentle.wav`) có nút bật/tắt
+- [x] Nâng cấp trang Web Giám Sát & Phân Tích Học Tập (`web_parent_report/index.html`) hiển thị đầy đủ: con đang mở app gì, biểu đồ thời gian dùng từng app, cảnh báo tỷ lệ Giải trí/Học tập, bảng lịch sử sử dụng máy và nhật ký học tập theo Tên bé, Thiết bị, Vị trí
+- [x] Mở rộng kho câu hỏi chuẩn GDPT 2018 (đặc biệt Lớp 1: Ghép vần, Hình học, Toán lời văn, Xem giờ, TN&XH, Đố vui) trong `assets/data/sample_questions.json`
 - [x] Thêm `BootReceiver.kt` tự khởi chạy lại dịch vụ giám sát khi khởi động lại điện thoại/tablet
 - [x] Thêm tính năng liệt kê toàn bộ App đã cài trên máy (`MainActivity.kt` → `getInstalledApps`) và hộp thoại **Chọn App bị khóa** trong `ParentDashboardScreen`
 - [ ] `[!]` **Cần xử lý đặc thù hãng máy:** Xiaomi (MIUI/HyperOS), Oppo (ColorOS), Samsung hay tự tắt Foreground Service chạy ngầm — cần thêm hướng dẫn tắt tối ưu pin & `DeviceAdminReceiver` chống trẻ tự gỡ app.

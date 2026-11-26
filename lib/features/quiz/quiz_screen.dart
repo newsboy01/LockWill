@@ -289,7 +289,11 @@ class _QuizScreenState extends State<QuizScreen>
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    AnimatedOwlMascot(mood: _owlMood, size: 76),
+                    AnimatedOwlMascot(
+                      mood: _owlMood,
+                      size: 76,
+                      accessory: widget.profile.owlAccessory,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Container(

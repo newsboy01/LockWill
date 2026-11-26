@@ -3,16 +3,18 @@ import 'package:flutter/material.dart';
 
 enum OwlMood { idle, happy, encourage }
 
-/// Nhân vật Cú mèo vẽ khối phong cách hoạt hình 3D (đổ bóng khối, vỗ cánh, chớp mắt, nhảy mừng, tỏa sao).
+/// Nhân vật Cú mèo vẽ khối phong cách hoạt hình 3D (đổ bóng khối, vỗ cánh, chớp mắt, phụ kiện thưởng sao).
 class AnimatedOwlMascot extends StatefulWidget {
   const AnimatedOwlMascot({
     super.key,
     this.mood = OwlMood.idle,
     this.size = 120,
+    this.accessory = 'grad_cap',
   });
 
   final OwlMood mood;
   final double size;
+  final String accessory; // none | grad_cap | glasses | crown
 
   @override
   State<AnimatedOwlMascot> createState() => _AnimatedOwlMascotState();
@@ -101,6 +103,7 @@ class _AnimatedOwlMascotState extends State<AnimatedOwlMascot>
                       wingAngle: wingAngle,
                       isBlinking: isBlinking,
                       sparklePhase: t,
+                      accessory: widget.accessory,
                     ),
                   ),
                 ),
@@ -119,12 +122,14 @@ class _Owl3DPainter extends CustomPainter {
     required this.wingAngle,
     required this.isBlinking,
     required this.sparklePhase,
+    required this.accessory,
   });
 
   final OwlMood mood;
   final double wingAngle;
   final bool isBlinking;
   final double sparklePhase;
+  final String accessory;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -210,7 +215,50 @@ class _Owl3DPainter extends CustomPainter {
       footPaint,
     );
 
-    // 9. Hiệu ứng sao lấp lánh khi vui mừng
+    // 9. Phụ kiện mở khóa bằng sao (Mũ cử nhân / Kính thông minh / Vương miện)
+    if (accessory == 'grad_cap') {
+      final capPaint = Paint()..color = const Color(0xFF1D4ED8);
+      final diamond = Path()
+        ..moveTo(cx, h * 0.05)
+        ..lineTo(cx + w * 0.25, h * 0.16)
+        ..lineTo(cx, h * 0.25)
+        ..lineTo(cx - w * 0.25, h * 0.16)
+        ..close();
+      canvas.drawPath(diamond, capPaint);
+      canvas.drawLine(
+        Offset(cx + w * 0.22, h * 0.16),
+        Offset(cx + w * 0.26, h * 0.28),
+        Paint()
+          ..color = const Color(0xFFFFD166)
+          ..strokeWidth = w * 0.025
+          ..strokeCap = StrokeCap.round,
+      );
+    } else if (accessory == 'crown') {
+      final crown = Path()
+        ..moveTo(cx - w * 0.18, h * 0.22)
+        ..lineTo(cx - w * 0.15, h * 0.09)
+        ..lineTo(cx - w * 0.06, h * 0.16)
+        ..lineTo(cx, h * 0.06)
+        ..lineTo(cx + w * 0.06, h * 0.16)
+        ..lineTo(cx + w * 0.15, h * 0.09)
+        ..lineTo(cx + w * 0.18, h * 0.22)
+        ..close();
+      canvas.drawPath(crown, Paint()..color = const Color(0xFFFFCA3A));
+    } else if (accessory == 'glasses') {
+      final frame = Paint()
+        ..color = const Color(0xFF1E293B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = w * 0.032;
+      canvas.drawCircle(Offset(w * 0.37, h * 0.43), w * 0.14, frame);
+      canvas.drawCircle(Offset(w * 0.63, h * 0.43), w * 0.14, frame);
+      canvas.drawLine(
+        Offset(w * 0.51, h * 0.43),
+        Offset(w * 0.49, h * 0.43),
+        frame,
+      );
+    }
+
+    // 10. Hiệu ứng sao lấp lánh khi vui mừng
     if (mood == OwlMood.happy) {
       final starPaint = Paint()..color = const Color(0xFFFFD166);
       final r = w * 0.055 * (0.8 + 0.4 * math.sin(sparklePhase * math.pi));

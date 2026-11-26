@@ -15,6 +15,7 @@ class ParentDashboardScreen extends StatefulWidget {
     required this.onSimulateTimeUp,
     required this.onRequestPermissions,
     required this.onSyncQuestionsNow,
+    required this.onSyncDeviceUsageNow,
   });
 
   final ChildProfile profile;
@@ -25,6 +26,7 @@ class ParentDashboardScreen extends StatefulWidget {
   final VoidCallback onSimulateTimeUp;
   final VoidCallback onRequestPermissions;
   final Future<int> Function(String repo) onSyncQuestionsNow;
+  final Future<bool> Function() onSyncDeviceUsageNow;
 
   @override
   State<ParentDashboardScreen> createState() => _ParentDashboardScreenState();
@@ -54,6 +56,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   late Set<String> _blockedPackages;
   List<InstalledAppInfo> _installedApps = const [];
   bool _hasPermissions = false;
+  bool _isAdminActive = false;
 
   @override
   void initState() {
@@ -82,10 +85,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   Future<void> _loadDeviceAppsAndPermissions() async {
     final perm = await widget.deviceLockService.hasRequiredPermissions();
+    final admin = await widget.deviceLockService.isDeviceAdminActive();
     final apps = await widget.deviceLockService.getInstalledApps();
     if (!mounted) return;
     setState(() {
       _hasPermissions = perm;
+      _isAdminActive = admin;
       _installedApps = apps;
     });
   }
@@ -257,6 +262,31 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         label: Text(
                           'Chọn App bị khóa (${_blockedPackages.length})',
                         ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          await widget.deviceLockService.requestDeviceAdmin();
+                          Future<void>.delayed(
+                            const Duration(seconds: 2),
+                            _loadDeviceAppsAndPermissions,
+                          );
+                        },
+                        icon: Icon(
+                          _isAdminActive
+                              ? Icons.shield_rounded
+                              : Icons.admin_panel_settings_outlined,
+                        ),
+                        label: Text(
+                          _isAdminActive
+                              ? 'Chống gỡ app: ĐÃ BẬT ✅'
+                              : 'Bật chống tự gỡ app',
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => widget.deviceLockService
+                            .requestIgnoreBatteryOptimization(),
+                        icon: const Icon(Icons.battery_saver_rounded),
+                        label: const Text('Tắt tối ưu pin (Chạy nền bền)'),
                       ),
                       FilledButton.tonalIcon(
                         onPressed: widget.onSimulateTimeUp,
@@ -500,24 +530,47 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () async {
-              final count = await widget.onSyncQuestionsNow(
-                _githubRepoController.text.trim(),
-              );
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    count > 0
-                        ? 'Đã tải $count câu hỏi mới nhất từ GitHub!'
-                        : 'Không kết nối được GitHub, đang dùng dữ liệu offline.',
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.download_for_offline_rounded),
-            label: const Text('Cập nhật bộ câu hỏi mới nhất từ GitHub'),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final count = await widget.onSyncQuestionsNow(
+                    _githubRepoController.text.trim(),
+                  );
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        count > 0
+                            ? 'Đã tải $count câu hỏi mới nhất từ GitHub!'
+                            : 'Không kết nối được GitHub, đang dùng dữ liệu offline.',
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.download_for_offline_rounded),
+                label: const Text('Cập nhật bộ câu hỏi từ GitHub'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final ok = await widget.onSyncDeviceUsageNow();
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        ok
+                            ? 'Đã đồng bộ lịch sử dùng máy lên trang Giám sát!'
+                            : 'Cần nhập GitHub Token hợp lệ trước khi đồng bộ.',
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.cloud_upload_rounded),
+                label: const Text('Đẩy lịch sử dùng máy lên Web ngay'),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           FilledButton.icon(

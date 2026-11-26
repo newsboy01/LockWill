@@ -61,6 +61,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
   Future<void> _initData() async {
     final profile = await _storage.loadProfile();
     await _audioGuide.applyProfileSettings(profile);
+    await _audioGuide.setBgmEnabled(profile.bgmEnabled);
     // Tự động kiểm tra và cập nhật bộ câu hỏi mới nhất từ GitHub chạy nền.
     _curriculumService.syncQuestionsFromGitHub(profile.githubRepo);
 
@@ -116,12 +117,20 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
               totalCorrectToday:
                   _usageState.totalCorrectToday + summary.firstTryCorrect,
             );
+            final earnedStars = summary.firstTryCorrect * 2 + 3;
+            final updatedProfile = _profile.copyWith(
+              stars: _profile.stars + earnedStars,
+            );
+            await _storage.saveProfile(updatedProfile);
             await _storage.saveUsageState(updated);
-            setState(() => _usageState = updated);
+            setState(() {
+              _profile = updatedProfile;
+              _usageState = updated;
+            });
 
-            // Lưu & tự đồng bộ báo cáo học tập (kèm thông tin thiết bị, vị trí) lên GitHub.
+            // Lưu & tự đồng bộ báo cáo học tập + lịch sử sử dụng máy lên GitHub.
             await _reportService.recordAndSyncSession(
-              profile: _profile,
+              profile: updatedProfile,
               deviceLockService: _lockService,
               totalQuestions: summary.totalQuestions,
               firstTryCorrect: summary.firstTryCorrect,
@@ -134,7 +143,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Chúc mừng ${_profile.name}! Bé đã nhận thêm +${challenge.rewardMinutes} phút!',
+                    'Chúc mừng ${_profile.name}! Nhận +${challenge.rewardMinutes} phút & +$earnedStars ⭐!',
                   ),
                 ),
               );
@@ -178,9 +187,21 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
           onRequestPermissions: () => _lockService.requestRequiredPermissions(),
           onSyncQuestionsNow: (repo) =>
               _curriculumService.syncQuestionsFromGitHub(repo),
+          onSyncDeviceUsageNow: () => _reportService.syncDeviceUsageNow(
+            profile: _profile,
+            deviceLockService: _lockService,
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _cycleOwlAccessory() async {
+    const order = ['grad_cap', 'glasses', 'crown', 'none'];
+    final next = order[(order.indexOf(_profile.owlAccessory) + 1) % order.length];
+    final updated = _profile.copyWith(owlAccessory: next);
+    await _storage.saveProfile(updated);
+    setState(() => _profile = updated);
   }
 
   @override
@@ -200,12 +221,25 @@ class _LockWillHomeControllerState extends State<LockWillHomeController> {
       usageState: _usageState,
       nextChallenge: challenge,
       isMuted: _audioGuide.isMuted,
+      bgmEnabled: _profile.bgmEnabled,
       onToggleMute: () {
         setState(() {
           _audioGuide.isMuted = !_audioGuide.isMuted;
         });
-        if (_audioGuide.isMuted) _audioGuide.stop();
+        if (_audioGuide.isMuted) {
+          _audioGuide.stop();
+        } else {
+          _audioGuide.setBgmEnabled(_profile.bgmEnabled);
+        }
       },
+      onToggleBgm: () async {
+        final next = !_profile.bgmEnabled;
+        final updated = _profile.copyWith(bgmEnabled: next);
+        await _storage.saveProfile(updated);
+        await _audioGuide.setBgmEnabled(next);
+        setState(() => _profile = updated);
+      },
+      onCycleAccessory: _cycleOwlAccessory,
       onStartQuiz: _startExtensionQuiz,
       onOpenParentGate: _openParentDashboard,
       onSpeakWelcome: () => _audioGuide.speak(

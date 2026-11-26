@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -19,11 +20,15 @@ class InstalledAppInfo {
 abstract class DeviceLockService {
   Future<bool> hasRequiredPermissions();
   Future<void> requestRequiredPermissions();
+  Future<bool> isDeviceAdminActive();
+  Future<void> requestDeviceAdmin();
+  Future<void> requestIgnoreBatteryOptimization();
   Future<void> startMonitoring(List<String> blockedPackages);
   Future<void> stopMonitoring();
   Future<void> lockDeviceApps();
   Future<void> unlockForMinutes(int minutes);
   Future<List<InstalledAppInfo>> getInstalledApps();
+  Future<Map<String, dynamic>> getUsageHistory();
   Future<Map<String, String>> getDeviceInfo();
 }
 
@@ -54,6 +59,67 @@ class MethodChannelDeviceLockService implements DeviceLockService {
     } on MissingPluginException {
       // Safe fallback.
     }
+  }
+
+  @override
+  Future<bool> isDeviceAdminActive() async {
+    if (kIsWeb) return false;
+    try {
+      return (await _channel.invokeMethod<bool>('isDeviceAdminActive')) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<void> requestDeviceAdmin() async {
+    if (kIsWeb) return;
+    try {
+      await _channel.invokeMethod<void>('requestDeviceAdmin');
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> requestIgnoreBatteryOptimization() async {
+    if (kIsWeb) return;
+    try {
+      await _channel.invokeMethod<void>('requestIgnoreBatteryOptimization');
+    } catch (_) {}
+  }
+
+  @override
+  Future<Map<String, dynamic>> getUsageHistory() async {
+    if (kIsWeb) {
+      return {
+        'date': DateTime.now().toIso8601String().substring(0, 10),
+        'remainingSeconds': 0,
+        'currentApp': 'LockWill Web Demo',
+        'currentAppUpdatedAt': DateTime.now().toIso8601String(),
+        'apps': [
+          {
+            'packageName': 'com.google.android.youtube',
+            'appName': 'YouTube',
+            'seconds': 1080,
+            'isBlockedApp': true,
+            'lastUsedAt': DateTime.now().toIso8601String(),
+          },
+          {
+            'packageName': 'com.lockwill.app',
+            'appName': 'LockWill',
+            'seconds': 540,
+            'isBlockedApp': false,
+            'lastUsedAt': DateTime.now().toIso8601String(),
+          },
+        ],
+      };
+    }
+    try {
+      final raw = await _channel.invokeMethod<String>('getUsageHistoryJson');
+      if (raw != null && raw.isNotEmpty) {
+        return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      }
+    } catch (_) {}
+    return const {'apps': []};
   }
 
   @override

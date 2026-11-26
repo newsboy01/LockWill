@@ -3,29 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LockWill — Phân Tích Học Tập Dành Cho Phụ Huynh</title>
+  <title>LockWill — Giám Sát Thiết Bị & Phân Tích Học Tập Phụ Huynh</title>
   <style>
     :root {
-      --bg: #f4f7fb;
+      --bg: #f1f5f9;
       --card: #ffffff;
       --primary: #2563eb;
       --accent: #f97316;
       --good: #10b981;
       --warn: #f59e0b;
       --bad: #ef4444;
-      --text: #1e293b;
+      --text: #0f172a;
       --muted: #64748b;
     }
     * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { margin: 0; background: var(--bg); color: var(--text); }
     header {
-      background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+      background: linear-gradient(135deg, #1e3a8a, #0284c7);
       color: #fff;
       padding: 24px 20px;
     }
-    .container { max-width: 1120px; margin: 0 auto; padding: 20px; }
-    header h1 { margin: 0 0 6px; font-size: 26px; }
-    header p { margin: 0; opacity: 0.9; font-size: 15px; }
+    .container { max-width: 1180px; margin: 0 auto; padding: 20px; }
+    header h1 { margin: 0 0 6px; font-size: 25px; }
+    header p { margin: 0; opacity: 0.92; font-size: 14px; }
+    .top-actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-link {
+      display: inline-block; background: rgba(255,255,255,0.2); color: #fff;
+      text-decoration: none; padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 13px;
+      border: none; cursor: pointer;
+    }
     .filters {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -43,29 +49,36 @@
     }
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
       gap: 14px;
       margin-bottom: 18px;
     }
     .kpi {
-      background: var(--card); padding: 18px; border-radius: 16px;
+      background: var(--card); padding: 16px 18px; border-radius: 16px;
       box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
     }
-    .kpi .label { font-size: 13px; color: var(--muted); font-weight: 600; }
-    .kpi .value { font-size: 28px; font-weight: 800; margin-top: 6px; color: var(--primary); }
+    .kpi .label { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+    .kpi .value { font-size: 26px; font-weight: 800; margin-top: 6px; color: var(--primary); }
     .grid-2 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
       gap: 16px;
       margin-bottom: 18px;
     }
     .card {
       background: var(--card); padding: 20px; border-radius: 16px;
       box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+      margin-bottom: 18px;
     }
-    .card h2 { margin: 0 0 14px; font-size: 18px; }
+    .card h2 { margin: 0 0 14px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+    .device-card {
+      border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 12px;
+      background: #f8fafc;
+    }
+    .device-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
     .bar-row { margin-bottom: 12px; }
-    .bar-head { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .bar-head { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 4px; gap: 8px; }
     .bar-track { height: 12px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
     .bar-fill { height: 100%; border-radius: 99px; transition: width 0.3s ease; }
     .insight {
@@ -74,6 +87,7 @@
     }
     .insight.good { background: #ecfdf5; border-left: 4px solid var(--good); color: #065f46; }
     .insight.warn { background: #fffbeb; border-left: 4px solid var(--warn); color: #92400e; }
+    .insight.bad { background: #fef2f2; border-left: 4px solid var(--bad); color: #991b1b; }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
     th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
@@ -81,21 +95,19 @@
       display: inline-block; padding: 3px 10px; border-radius: 99px;
       font-size: 12px; font-weight: 700; background: #e0f2fe; color: #0369a1;
     }
+    .pill.blocked { background: #fee2e2; color: #b91c1c; }
+    .pill.safe { background: #dcfce7; color: #166534; }
     .table-wrap { overflow-x: auto; }
-    .top-actions { margin-top: 10px; }
-    .btn-link {
-      display: inline-block; background: rgba(255,255,255,0.2); color: #fff;
-      text-decoration: none; padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: 13px;
-    }
   </style>
 </head>
 <body>
   <header>
     <div class="container" style="padding:0;">
-      <h1>🦉 LockWill — Tổng Hợp & Phân Tích Học Tập</h1>
-      <p>Theo dõi tiến độ học tập theo từng bé, thiết bị cài đặt (hãng/model) và vị trí — tự động đánh giá điểm mạnh & điểm cần ôn thêm.</p>
+      <h1>🦉 LockWill — Giám Sát Điện Thoại & Phân Tích Học Tập</h1>
+      <p>Theo dõi con đang mở ứng dụng gì, xem bao lâu, toàn bộ lịch sử dùng máy và tự động đánh giá kết quả học tập theo từng bé, thiết bị và vị trí.</p>
       <div class="top-actions">
-        <a class="btn-link" href="../">⬅️ Mở lại App LockWill Web</a>
+        <a class="btn-link" href="../">⬅️ Mở App LockWill Web</a>
+        <button class="btn-link" onclick="loadData()">🔄 Tải dữ liệu mới nhất</button>
       </div>
     </div>
   </header>
@@ -121,32 +133,62 @@
     </section>
 
     <section class="kpi-grid">
-      <div class="kpi"><div class="label">Tổng số phiên làm bài</div><div class="value" id="kSessions">0</div></div>
-      <div class="kpi"><div class="label">Tổng số câu hoàn thành</div><div class="value" id="kQuestions">0</div></div>
-      <div class="kpi"><div class="label">Tỉ lệ đúng ngay lần đầu</div><div class="value" id="kAccuracy" style="color:var(--good);">0%</div></div>
-      <div class="kpi"><div class="label">Tổng thời gian đã thưởng</div><div class="value" id="kMinutes" style="color:var(--accent);">0 phút</div></div>
+      <div class="kpi"><div class="label">Tổng thời gian dùng giải trí</div><div class="value" id="kEntTime" style="color:var(--bad);">0 phút</div></div>
+      <div class="kpi"><div class="label">Tổng thời gian học (LockWill)</div><div class="value" id="kStudyTime" style="color:var(--good);">0 phút</div></div>
+      <div class="kpi"><div class="label">Tỉ lệ đúng ngay lần đầu</div><div class="value" id="kAccuracy" style="color:var(--primary);">0%</div></div>
+      <div class="kpi"><div class="label">Tổng câu đã hoàn thành</div><div class="value" id="kQuestions" style="color:var(--accent);">0 câu</div></div>
     </section>
 
     <section class="grid-2">
-      <div class="card">
-        <h2>📊 Độ chính xác theo từng môn học</h2>
-        <div id="subjectBars">Đang tải dữ liệu...</div>
+      <div class="card" style="margin-bottom:0;">
+        <h2>📡 Giám Sát Hoạt Động Điện Thoại (Gần nhất)</h2>
+        <div id="liveMonitorBox">Đang tải...</div>
       </div>
-      <div class="card">
-        <h2>🧠 Tự động đánh giá & Gợi ý cho phụ huynh</h2>
+      <div class="card" style="margin-bottom:0;">
+        <h2>⏱️ Thời Gian Sử Dụng Từng Ứng Dụng</h2>
+        <div id="appUsageBars">Đang tải...</div>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card" style="margin-bottom:0;">
+        <h2>📊 Độ Chính Xác Theo Từng Môn Học</h2>
+        <div id="subjectBars">Đang tải...</div>
+      </div>
+      <div class="card" style="margin-bottom:0;">
+        <h2>🧠 Tự Động Đánh Giá & Gợi Ý Phụ Huynh</h2>
         <div id="insightsBox">Đang phân tích...</div>
       </div>
     </section>
 
     <section class="card">
-      <h2>📱 Nhật ký chi tiết theo Bé, Thiết bị & Vị trí</h2>
+      <h2>📱 Lịch Sử Chi Tiết Các Ứng Dụng Con Đã Mở</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Bé / Vị trí</th>
+              <th>Thiết bị</th>
+              <th>Ứng dụng đã mở</th>
+              <th>Phân loại</th>
+              <th>Thời lượng dùng</th>
+              <th>Mở gần nhất</th>
+            </tr>
+          </thead>
+          <tbody id="appHistoryTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📝 Nhật Ký Các Phiên Làm Bài Đổi Giờ</h2>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Thời gian</th>
               <th>Bé / Lớp</th>
-              <th>Thiết bị (Hãng • Model • OS)</th>
+              <th>Thiết bị</th>
               <th>Vị trí</th>
               <th>Kết quả</th>
               <th>Thưởng</th>
@@ -160,6 +202,14 @@
 
   <script>
     let allSessions = [];
+    let allMonitors = [];
+
+    function fmtDuration(sec) {
+      const m = Math.floor((sec || 0) / 60);
+      const s = Math.floor((sec || 0) % 60);
+      if (m <= 0) return `${s} giây`;
+      return s > 0 ? `${m} phút ${s} giây` : `${m} phút`;
+    }
 
     async function loadData() {
       const urls = [
@@ -172,6 +222,7 @@
           if (res.ok) {
             const json = await res.json();
             allSessions = json.sessions || [];
+            allMonitors = json.deviceMonitors || [];
             break;
           }
         } catch (_) {}
@@ -182,16 +233,27 @@
 
     function fillSelect(id, values, labelPrefix = '') {
       const el = document.getElementById(id);
+      const prev = el.value;
       const first = el.options[0].outerHTML;
-      el.innerHTML = first + [...new Set(values)].sort().map(v => `<option value="${v}">${labelPrefix}${v}</option>`).join('');
+      el.innerHTML = first + [...new Set(values.filter(Boolean))].sort()
+        .map(v => `<option value="${v}">${labelPrefix}${v}</option>`).join('');
+      if ([...el.options].some(o => o.value === prev)) el.value = prev;
       el.onchange = render;
     }
 
     function populateFilters() {
-      fillSelect('fChild', allSessions.map(s => s.childName));
-      fillSelect('fDevice', allSessions.map(s => `${s.deviceBrand} ${s.deviceModel}`));
-      fillSelect('fLocation', allSessions.map(s => s.location));
-      fillSelect('fGrade', allSessions.map(s => String(s.grade)), 'Lớp ');
+      const merged = [...allSessions, ...allMonitors];
+      fillSelect('fChild', merged.map(s => s.childName));
+      fillSelect('fDevice', merged.map(s => `${s.deviceBrand} ${s.deviceModel}`));
+      fillSelect('fLocation', merged.map(s => s.location));
+      fillSelect('fGrade', merged.map(s => String(s.grade)), 'Lớp ');
+    }
+
+    function matchFilter(item, c, d, l, g) {
+      return (c === 'ALL' || item.childName === c) &&
+        (d === 'ALL' || `${item.deviceBrand} ${item.deviceModel}` === d) &&
+        (l === 'ALL' || item.location === l) &&
+        (g === 'ALL' || String(item.grade) === g);
     }
 
     function render() {
@@ -200,26 +262,90 @@
       const l = document.getElementById('fLocation').value;
       const g = document.getElementById('fGrade').value;
 
-      const filtered = allSessions.filter(s =>
-        (c === 'ALL' || s.childName === c) &&
-        (d === 'ALL' || `${s.deviceBrand} ${s.deviceModel}` === d) &&
-        (l === 'ALL' || s.location === l) &&
-        (g === 'ALL' || String(s.grade) === g)
-      );
+      const sessions = allSessions.filter(s => matchFilter(s, c, d, l, g));
+      const monitors = allMonitors.filter(m => matchFilter(m, c, d, l, g));
 
-      const totalQ = filtered.reduce((a, s) => a + (s.totalQuestions || 0), 0);
-      const firstRight = filtered.reduce((a, s) => a + (s.firstTryCorrect || 0), 0);
-      const totalMin = filtered.reduce((a, s) => a + (s.rewardMinutes || 0), 0);
+      // 1. Tổng hợp lịch sử dùng app
+      let blockedSec = 0;
+      let studySec = 0;
+      const appTotals = {};
+      const appRows = [];
+
+      monitors.forEach(m => {
+        (m.apps || []).forEach(a => {
+          const sec = a.seconds || 0;
+          if (a.isBlockedApp) blockedSec += sec;
+          else if ((a.appName || '').toLowerCase().includes('lockwill')) studySec += sec;
+
+          const key = a.appName || a.packageName;
+          if (!appTotals[key]) appTotals[key] = { seconds: 0, isBlocked: !!a.isBlockedApp };
+          appTotals[key].seconds += sec;
+
+          appRows.push({ monitor: m, app: a });
+        });
+      });
+
+      const totalQ = sessions.reduce((a, s) => a + (s.totalQuestions || 0), 0);
+      const firstRight = sessions.reduce((a, s) => a + (s.firstTryCorrect || 0), 0);
       const acc = totalQ > 0 ? Math.round((firstRight / totalQ) * 100) : 0;
 
-      document.getElementById('kSessions').textContent = filtered.length;
-      document.getElementById('kQuestions').textContent = totalQ;
+      document.getElementById('kEntTime').textContent = Math.round(blockedSec / 60) + ' phút';
+      document.getElementById('kStudyTime').textContent = Math.round(studySec / 60) + ' phút';
       document.getElementById('kAccuracy').textContent = acc + '%';
-      document.getElementById('kMinutes').textContent = totalMin + ' phút';
+      document.getElementById('kQuestions').textContent = totalQ + ' câu';
 
-      // Tổng hợp theo môn học
+      // 2. Render thẻ giám sát trực tiếp
+      const liveBox = document.getElementById('liveMonitorBox');
+      if (monitors.length === 0) {
+        liveBox.innerHTML = '<p style="color:#64748b">Chưa có thiết bị nào khớp bộ lọc.</p>';
+      } else {
+        liveBox.innerHTML = monitors.map(m => {
+          const remMin = Math.ceil((m.remainingSeconds || 0) / 60);
+          const isLocked = remMin <= 0;
+          const seen = m.lastSeenAt ? new Date(m.lastSeenAt).toLocaleString('vi-VN') : '—';
+          return `
+            <div class="device-card">
+              <div class="device-head">
+                <div><strong>${m.childName}</strong> (${m.age}t • Lớp ${m.grade}) — 📍 ${m.location}</div>
+                <span class="pill ${isLocked ? 'blocked' : 'safe'}">
+                  ${isLocked ? '🔒 Đang khóa giải trí' : `⏳ Còn ${remMin} phút mở khóa`}
+                </span>
+              </div>
+              <div style="margin-top:8px;font-size:14px;">
+                <span class="status-dot" style="background:${isLocked ? '#ef4444' : '#10b981'};"></span>
+                Ứng dụng mở gần nhất: <strong>${m.currentApp || 'LockWill'}</strong>
+              </div>
+              <div style="margin-top:4px;font-size:12px;color:#64748b;">
+                📱 ${m.deviceBrand} ${m.deviceModel} (${m.osVersion}) • Cập nhật: ${seen}
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      // 3. Biểu đồ thời gian từng ứng dụng
+      const appBarBox = document.getElementById('appUsageBars');
+      const appEntries = Object.entries(appTotals).sort((a, b) => b[1].seconds - a[1].seconds);
+      if (appEntries.length === 0) {
+        appBarBox.innerHTML = '<p style="color:#64748b">Chưa ghi nhận thời gian sử dụng ứng dụng.</p>';
+      } else {
+        const maxSec = appEntries[0][1].seconds || 1;
+        appBarBox.innerHTML = appEntries.map(([name, st]) => {
+          const pct = Math.max(6, Math.round((st.seconds / maxSec) * 100));
+          const color = st.isBlocked ? '#ef4444' : '#10b981';
+          return `
+            <div class="bar-row">
+              <div class="bar-head">
+                <span>${st.isBlocked ? '🎮' : '📘'} ${name}</span>
+                <span>${fmtDuration(st.seconds)}</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color};"></div></div>
+            </div>`;
+        }).join('');
+      }
+
+      // 4. Độ chính xác theo môn & Đánh giá tự động
       const subjectMap = {};
-      filtered.forEach(s => {
+      sessions.forEach(s => {
         const sb = s.subjectBreakdown || {};
         Object.keys(sb).forEach(sub => {
           if (!subjectMap[sub]) subjectMap[sub] = { correct: 0, wrong: 0 };
@@ -231,45 +357,58 @@
       const barsEl = document.getElementById('subjectBars');
       const insightsEl = document.getElementById('insightsBox');
       const entries = Object.entries(subjectMap);
+      const insights = [];
+
+      if (blockedSec > studySec * 3 && blockedSec > 1800) {
+        insights.push(`<div class="insight bad"><strong>Cảnh báo tỷ lệ Giải trí / Học tập:</strong> Thời gian xem ứng dụng giải trí (${Math.round(blockedSec / 60)} phút) đang cao hơn nhiều so với thời gian làm bài (${Math.round(studySec / 60)} phút). Phụ huynh nên giảm quỹ giờ mặc định hoặc tăng số câu đổi giờ.</div>`);
+      } else if (studySec > 0) {
+        insights.push(`<div class="insight good"><strong>Cân bằng sử dụng tốt:</strong> Bé duy trì thói quen làm bài đều đặn trước khi mở ứng dụng giải trí!</div>`);
+      }
 
       if (entries.length === 0) {
-        barsEl.innerHTML = '<p style="color:#64748b">Chưa có dữ liệu cho bộ lọc này.</p>';
-        insightsEl.innerHTML = '<p style="color:#64748b">Hãy chọn bé khác hoặc chờ bé hoàn thành bài tập.</p>';
+        barsEl.innerHTML = '<p style="color:#64748b">Chưa có dữ liệu môn học.</p>';
       } else {
         barsEl.innerHTML = entries.map(([sub, st]) => {
           const sum = st.correct + st.wrong;
           const pct = sum > 0 ? Math.round((st.correct / sum) * 100) : 0;
           const color = pct >= 80 ? '#10b981' : (pct >= 60 ? '#f59e0b' : '#ef4444');
+          if (pct >= 85) {
+            insights.push(`<div class="insight good"><strong>Điểm mạnh — ${sub} (${pct}%):</strong> Bé nắm vững kiến thức môn này, có thể tăng dần độ khó.</div>`);
+          } else if (pct < 75) {
+            insights.push(`<div class="insight warn"><strong>Cần ôn thêm — ${sub} (${pct}%):</strong> Bé còn nhầm một số câu, phụ huynh nên bật giọng đọc chậm hơn và cùng ôn dạng bài tuần hiện tại.</div>`);
+          }
           return `
             <div class="bar-row">
               <div class="bar-head"><span>${sub}</span><span>${pct}% (${st.correct}/${sum} đúng ngay)</span></div>
               <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color};"></div></div>
             </div>`;
         }).join('');
-
-        const insights = [];
-        entries.forEach(([sub, st]) => {
-          const sum = st.correct + st.wrong;
-          const pct = sum > 0 ? Math.round((st.correct / sum) * 100) : 0;
-          if (pct >= 85) {
-            insights.push(`<div class="insight good"><strong>Điểm mạnh — ${sub} (${pct}%):</strong> Bé nắm rất vững kiến thức môn này, có thể tăng dần độ khó để thử thách thêm.</div>`);
-          } else if (pct < 75) {
-            insights.push(`<div class="insight warn"><strong>Cần ôn thêm — ${sub} (${pct}%):</strong> Bé còn nhầm ở một số câu. Phụ huynh nên bật tốc độ đọc chậm hơn hoặc cùng bé ôn lại dạng bài tuần hiện tại.</div>`);
-          }
-        });
-        if (insights.length === 0) {
-          insights.push(`<div class="insight good"><strong>Tiến độ ổn định (${acc}%):</strong> Bé học đều các môn và hoàn thành tốt các lượt đổi giờ!</div>`);
-        }
-        insightsEl.innerHTML = insights.join('');
       }
+      insightsEl.innerHTML = insights.join('') || '<p style="color:#64748b">Đang chờ thêm dữ liệu để phân tích.</p>';
 
-      document.getElementById('sessionTable').innerHTML = filtered.map(s => {
+      // 5. Bảng chi tiết app đã mở
+      appRows.sort((a, b) => (b.app.seconds || 0) - (a.app.seconds || 0));
+      document.getElementById('appHistoryTable').innerHTML = appRows.map(({ monitor: m, app: a }) => {
+        const dt = a.lastUsedAt ? new Date(a.lastUsedAt).toLocaleString('vi-VN') : '—';
+        return `
+          <tr>
+            <td><strong>${m.childName}</strong><br><small style="color:#64748b">📍 ${m.location}</small></td>
+            <td>${m.deviceBrand} ${m.deviceModel}</td>
+            <td><strong>${a.appName}</strong><br><small style="color:#64748b">${a.packageName}</small></td>
+            <td><span class="pill ${a.isBlockedApp ? 'blocked' : 'safe'}">${a.isBlockedApp ? 'Bị khóa / Giải trí' : 'Cho phép / Học tập'}</span></td>
+            <td><strong>${fmtDuration(a.seconds)}</strong></td>
+            <td>${dt}</td>
+          </tr>`;
+      }).join('');
+
+      // 6. Bảng nhật ký phiên làm bài
+      document.getElementById('sessionTable').innerHTML = sessions.map(s => {
         const dt = new Date(s.timestamp).toLocaleString('vi-VN');
         return `
           <tr>
             <td>${dt}</td>
             <td><strong>${s.childName}</strong> (${s.age}t)<br><span class="pill">Lớp ${s.grade}</span></td>
-            <td><strong>${s.deviceBrand}</strong> • ${s.deviceModel}<br><small style="color:#64748b">${s.osVersion}</small></td>
+            <td><strong>${s.deviceBrand}</strong> • ${s.deviceModel}</td>
             <td>📍 ${s.location}</td>
             <td>Đúng lần đầu: <strong>${s.firstTryCorrect}/${s.totalQuestions}</strong><br><small style="color:#64748b">Thử lại: ${s.wrongAttempts} lần</small></td>
             <td><span class="pill" style="background:#ffedd5;color:#c2410c;">+${s.rewardMinutes} phút</span></td>
