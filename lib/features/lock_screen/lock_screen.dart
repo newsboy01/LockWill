@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/models/child_profile.dart';
 import '../../core/models/daily_usage_state.dart';
+import '../../core/models/owl_pet_state.dart';
 import '../../core/platform/device_lock_service.dart';
 import '../../core/services/escalation_engine.dart';
 import '../../core/ui/responsive_layout.dart';
@@ -11,6 +12,7 @@ class LockScreen extends StatelessWidget {
   const LockScreen({
     super.key,
     required this.profile,
+    required this.petState,
     required this.usageState,
     required this.nextChallenge,
     required this.remainingSeconds,
@@ -19,7 +21,7 @@ class LockScreen extends StatelessWidget {
     required this.bgmEnabled,
     required this.onToggleMute,
     required this.onToggleBgm,
-    required this.onCycleAccessory,
+    required this.onOpenOwlHome,
     required this.onLaunchApp,
     required this.onStartQuiz,
     required this.onOpenParentGate,
@@ -27,6 +29,7 @@ class LockScreen extends StatelessWidget {
   });
 
   final ChildProfile profile;
+  final OwlPetState petState;
   final DailyUsageState usageState;
   final ExtensionChallenge nextChallenge;
   final int remainingSeconds;
@@ -35,7 +38,7 @@ class LockScreen extends StatelessWidget {
   final bool bgmEnabled;
   final VoidCallback onToggleMute;
   final VoidCallback onToggleBgm;
-  final VoidCallback onCycleAccessory;
+  final VoidCallback onOpenOwlHome;
   final ValueChanged<String> onLaunchApp;
   final VoidCallback onStartQuiz;
   final VoidCallback onOpenParentGate;
@@ -211,23 +214,36 @@ class LockScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3B0),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              '⭐ ${profile.stars} Sao thưởng • Chạm bạn Cú để đổi phụ kiện!',
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: r.isCompactPhone ? 11.5 : 12.5,
-                color: const Color(0xFF92400E),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3B0),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                '⭐ ${profile.stars} Sao • Lv.${petState.level}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: r.isCompactPhone ? 11.5 : 12.5,
+                  color: const Color(0xFF92400E),
+                ),
               ),
             ),
-          ),
+            ActionChip(
+              avatar: const Text('🏠', style: TextStyle(fontSize: 15)),
+              label: const Text(
+                'Nhà của bạn Cú & Đổi Ngoại trang',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+              ),
+              backgroundColor: Colors.white,
+              onPressed: onOpenOwlHome,
+            ),
+          ],
         ),
       ],
     );
@@ -236,11 +252,13 @@ class LockScreen extends StatelessWidget {
   Widget _buildMascotSection(ResponsiveLayout r) {
     return Center(
       child: GestureDetector(
-        onTap: onCycleAccessory,
+        onTap: onOpenOwlHome,
         child: AnimatedOwlMascot(
           mood: isUnlocked ? OwlMood.happy : OwlMood.idle,
           size: r.owlHeroSize,
-          accessory: profile.owlAccessory,
+          skin: petState.skin,
+          costume: petState.costume,
+          accessory: petState.accessory,
         ),
       ),
     );

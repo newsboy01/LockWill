@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/child_profile.dart';
 import '../models/daily_usage_state.dart';
+import '../models/owl_pet_state.dart';
 import 'curriculum_service.dart';
 import 'escalation_engine.dart';
 
@@ -9,6 +10,31 @@ class StorageService {
   static const _profileKey = 'lockwill_child_profile_v1';
   static const _usageKey = 'lockwill_daily_usage_v1';
   static const _onboardingKey = 'lockwill_onboarding_done_v1';
+  static const _petKey = 'lockwill_owl_pet_v1';
+
+  Future<OwlPetState> loadPetState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_petKey);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (raw == null) {
+      return OwlPetState(lastUpdatedMillis: now);
+    }
+    final state =
+        OwlPetState.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    return state.applyTimeDecay(now);
+  }
+
+  Future<void> savePetState(OwlPetState pet) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _petKey,
+      jsonEncode(
+        pet
+            .copyWith(lastUpdatedMillis: DateTime.now().millisecondsSinceEpoch)
+            .toJson(),
+      ),
+    );
+  }
 
   Future<bool> hasCompletedOnboarding() async {
     final prefs = await SharedPreferences.getInstance();

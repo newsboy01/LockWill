@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/models/child_profile.dart';
 import 'core/models/daily_usage_state.dart';
+import 'core/models/owl_pet_state.dart';
 import 'core/platform/device_lock_service.dart';
 import 'core/services/audio_guide_service.dart';
 import 'core/services/curriculum_service.dart';
@@ -13,6 +14,7 @@ import 'features/lock_screen/lock_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/parent/parent_dashboard_screen.dart';
 import 'features/parent/parent_gate_dialog.dart';
+import 'features/pet/owl_home_screen.dart';
 import 'features/quiz/celebration_dialog.dart';
 import 'features/quiz/quiz_screen.dart';
 
@@ -68,6 +70,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
   bool _loaded = false;
   bool _needsOnboarding = false;
   late ChildProfile _profile;
+  late OwlPetState _petState;
   late DailyUsageState _usageState;
   int _remainingSeconds = 0;
   List<InstalledAppInfo> _unlockedApps = const [];
@@ -101,6 +104,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
   Future<void> _initData() async {
     final onboarded = await _storage.hasCompletedOnboarding();
     final profile = await _storage.loadProfile();
+    final pet = await _storage.loadPetState();
     await _audioGuide.applyProfileSettings(profile);
     await _audioGuide.setBgmEnabled(profile.bgmEnabled);
     _curriculumService.syncQuestionsFromGitHub(profile.githubRepo);
@@ -134,6 +138,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
     if (!mounted) return;
     setState(() {
       _profile = profile;
+      _petState = pet;
       _usageState = usage;
       _remainingSeconds = rem;
       _unlockedApps = apps;
@@ -197,6 +202,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
       MaterialPageRoute(
         builder: (_) => QuizScreen(
           profile: _profile,
+          petState: _petState,
           challenge: challenge,
           questions: questions,
           audioGuide: _audioGuide,
@@ -216,7 +222,11 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
             final updatedProfile = _profile.copyWith(
               stars: _profile.stars + earnedStars,
             );
+            final updatedPet = _petState
+                .copyWith(happiness: _petState.happiness + 12)
+                .addXp(summary.totalQuestions * 4);
             await _storage.saveProfile(updatedProfile);
+            await _storage.savePetState(updatedPet);
             await _storage.saveUsageState(updated);
 
             final nextRem = kIsWeb
@@ -225,6 +235,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
 
             setState(() {
               _profile = updatedProfile;
+              _petState = updatedPet;
               _usageState = updated;
               _remainingSeconds = nextRem > 0
                   ? nextRem
@@ -252,7 +263,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
                 barrierDismissible: true,
                 builder: (_) => CelebrationDialog(
                   childName: updatedProfile.name,
-                  owlAccessory: updatedProfile.owlAccessory,
+                  petState: updatedPet,
                   rewardMinutes: challenge.rewardMinutes,
                   earnedStars: earnedStars,
                   unlockedApps: _unlockedApps,
@@ -318,13 +329,25 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
     );
   }
 
-  Future<void> _cycleOwlAccessory() async {
-    const order = ['grad_cap', 'glasses', 'crown', 'none'];
-    final next =
-        order[(order.indexOf(_profile.owlAccessory) + 1) % order.length];
-    final updated = _profile.copyWith(owlAccessory: next);
-    await _storage.saveProfile(updated);
-    setState(() => _profile = updated);
+  Future<void> _openOwlHome() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => OwlHomeScreen(
+          profile: _profile,
+          petState: _petState,
+          audioGuide: _audioGuide,
+          onUpdateState: (updatedProfile, updatedPet) async {
+            await _storage.saveProfile(updatedProfile);
+            await _storage.savePetState(updatedPet);
+            if (!mounted) return;
+            setState(() {
+              _profile = updatedProfile;
+              _petState = updatedPet;
+            });
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -360,6 +383,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
 
     return LockScreen(
       profile: _profile,
+      petState: _petState,
       usageState: _usageState,
       nextChallenge: challenge,
       remainingSeconds: _remainingSeconds,
@@ -383,7 +407,7 @@ class _LockWillHomeControllerState extends State<LockWillHomeController>
         await _audioGuide.setBgmEnabled(next);
         setState(() => _profile = updated);
       },
-      onCycleAccessory: _cycleOwlAccessory,
+      onOpenOwlHome: _openOwlHome,
       onLaunchApp: (pkg) => _lockService.launchApp(pkg),
       onStartQuiz: _startExtensionQuiz,
       onOpenParentGate: _openParentDashboard,

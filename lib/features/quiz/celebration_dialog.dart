@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../core/models/owl_pet_state.dart';
 import '../../core/platform/device_lock_service.dart';
 import '../../core/widgets/animated_owl_mascot.dart';
 import '../../core/widgets/tactile_3d_button.dart';
@@ -12,7 +13,7 @@ class CelebrationDialog extends StatefulWidget {
   const CelebrationDialog({
     super.key,
     required this.childName,
-    required this.owlAccessory,
+    required this.petState,
     required this.rewardMinutes,
     required this.earnedStars,
     required this.unlockedApps,
@@ -20,7 +21,7 @@ class CelebrationDialog extends StatefulWidget {
   });
 
   final String childName;
-  final String owlAccessory;
+  final OwlPetState petState;
   final int rewardMinutes;
   final int earnedStars;
   final List<InstalledAppInfo> unlockedApps;
@@ -97,7 +98,9 @@ class _CelebrationDialogState extends State<CelebrationDialog>
                     AnimatedOwlMascot(
                       mood: OwlMood.happy,
                       size: 120,
-                      accessory: widget.owlAccessory,
+                      skin: widget.petState.skin,
+                      costume: widget.petState.costume,
+                      accessory: widget.petState.accessory,
                     ),
                     const SizedBox(height: 10),
                     Text(

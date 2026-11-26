@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/models/child_profile.dart';
+import '../../core/models/owl_pet_state.dart';
 import '../../core/models/question.dart';
 import '../../core/services/audio_guide_service.dart';
 import '../../core/services/escalation_engine.dart';
@@ -26,6 +27,7 @@ class QuizScreen extends StatefulWidget {
   const QuizScreen({
     super.key,
     required this.profile,
+    required this.petState,
     required this.challenge,
     required this.questions,
     required this.audioGuide,
@@ -33,6 +35,7 @@ class QuizScreen extends StatefulWidget {
   });
 
   final ChildProfile profile;
+  final OwlPetState petState;
   final ExtensionChallenge challenge;
   final List<Question> questions;
   final AudioGuideService audioGuide;
@@ -367,7 +370,9 @@ class _QuizScreenState extends State<QuizScreen>
             AnimatedOwlMascot(
               mood: _owlMood,
               size: r.owlQuizSize,
-              accessory: widget.profile.owlAccessory,
+              skin: widget.petState.skin,
+              costume: widget.petState.costume,
+              accessory: widget.petState.accessory,
             ),
             const SizedBox(width: 10),
             Expanded(
