@@ -34,6 +34,9 @@ jobs:
           mkdir -p /tmp/lockwill_custom/kotlin /tmp/lockwill_custom/xml
           cp android/app/src/main/AndroidManifest.xml /tmp/lockwill_custom/
           cp -r android/app/src/main/kotlin/com/lockwill/app /tmp/lockwill_custom/kotlin/
+          if [ -f "android/app/lockwill_signing.p12" ]; then
+            cp android/app/lockwill_signing.p12 /tmp/lockwill_custom/
+          fi
           if [ -d "android/app/src/main/res/xml" ]; then
             cp -r android/app/src/main/res/xml/* /tmp/lockwill_custom/xml/
           fi
@@ -46,6 +49,23 @@ jobs:
           mkdir -p android/app/src/main/res/xml
           if [ "$(ls -A /tmp/lockwill_custom/xml 2>/dev/null)" ]; then
             cp -r /tmp/lockwill_custom/xml/* android/app/src/main/res/xml/
+          fi
+
+          # Cố định chữ ký APK giống nhau trên mọi lần build để cập nhật đè 1 chạm không bao giờ bị xung đột
+          if [ -f "/tmp/lockwill_custom/lockwill_signing.p12" ]; then
+            mkdir -p "$HOME/.android"
+            rm -f "$HOME/.android/debug.keystore"
+            keytool -importkeystore \
+              -srckeystore /tmp/lockwill_custom/lockwill_signing.p12 \
+              -srcstoretype PKCS12 \
+              -srcstorepass lockwill1234 \
+              -srcalias lockwill \
+              -destkeystore "$HOME/.android/debug.keystore" \
+              -deststoretype PKCS12 \
+              -deststorepass android \
+              -destalias androiddebugkey \
+              -destkeypass android \
+              -noprompt
           fi
           rm -rf android/app/src/main/kotlin/com/lockwill/lockwill
           mkdir -p android/app/src/main/kotlin/com/lockwill
