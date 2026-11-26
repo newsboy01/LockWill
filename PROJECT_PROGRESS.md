@@ -47,6 +47,7 @@
 - [x] Màn hình Làm bài (`QuizScreen`) hỗ trợ nút lớn cho trẻ nhỏ, gợi ý nhẹ nhàng khi làm sai, không phạt nặng
 - [x] Khung `AudioGuideService` đọc câu hỏi/hướng dẫn cho trẻ Lớp 1–2
 - [x] Cổng Phụ huynh (`ParentGateDialog`) bảo vệ bằng PIN/phép tính và `ParentDashboardScreen`
+- [x] Thiết kế lại App Icon 3D (`assets/icon/app_icon.png`) và tự động tạo đầy đủ icon launcher Android (`mipmap-mdpi..xxxhdpi`) & Web (`favicon.png`, `Icon-192/512`) trong CI
 - [x] Nhân vật Cú mèo vẽ khối phong cách hoạt hình 3D (`AnimatedOwlMascot`: đổ bóng khối, chớp mắt, vỗ cánh, nhảy mừng tỏa sao khi đúng, lắc khích lệ khi sai) và nút bấm nổi khối 3D (`Tactile3DButton`)
 - [x] Đa dạng 7 dạng câu hỏi tương tác cho Lớp 1–5: Trắc nghiệm, Đếm hình, So sánh (`> < =`), Đúng/Sai, Tự nhập số bằng bàn phím, Kéo thả (`drag_drop`), và Ghép chữ/Ghép vần (`word_build`)
 - [x] Tùy chỉnh giọng đọc Tiếng Việt trong Cài đặt Phụ huynh (chọn giọng `vi-VN` trên thiết bị, tốc độ nhanh/chậm, ngữ điệu trầm/tươi vui, kiểu hiệu ứng âm thanh, nút Nghe thử trực tiếp)

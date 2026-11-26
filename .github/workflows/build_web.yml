@@ -36,6 +36,13 @@ jobs:
           flutter create /tmp/lockwill_web --org com.lockwill --project-name lockwill --platforms=web
           rm -rf web
           cp -r /tmp/lockwill_web/web ./web
+          if [ -f "assets/icon/app_icon.png" ]; then
+            convert assets/icon/app_icon.png -resize 64x64 web/favicon.png
+            convert assets/icon/app_icon.png -resize 192x192 web/icons/Icon-192.png
+            convert assets/icon/app_icon.png -resize 512x512 web/icons/Icon-512.png
+            convert assets/icon/app_icon.png -resize 192x192 web/icons/Icon-maskable-192.png
+            convert assets/icon/app_icon.png -resize 512x512 web/icons/Icon-maskable-512.png
+          fi
 
       - name: Install dependencies
         run: flutter pub get
