@@ -20,10 +20,10 @@ jobs:
           java-version: '17'
 
       - name: Set up Flutter
-        uses: subosito/actions-flutter@v2
-        with:
-          channel: 'stable'
-          cache: true
+        run: |
+          git clone https://github.com/flutter/flutter.git -b stable --depth 1 "$HOME/flutter"
+          echo "$HOME/flutter/bin" >> "$GITHUB_PATH"
+          "$HOME/flutter/bin/flutter" --version
 
       - name: Generate Android Gradle files and preserve custom code
         run: |
