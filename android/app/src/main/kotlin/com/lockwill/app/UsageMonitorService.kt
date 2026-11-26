@@ -32,6 +32,7 @@ class UsageMonitorService : Service() {
     private var blockedPackages: Set<String> = emptySet()
     private var lastNotificationText: String = ""
     private var lastTickMillis: Long = System.currentTimeMillis()
+    private var lastKnownForegroundPkg: String? = null
 
     companion object {
         const val PREFS_NAME = "lockwill_native_prefs"
@@ -151,18 +152,23 @@ class UsageMonitorService : Service() {
         val appLabel = resolveAppLabel(topPkg)
         recordAppUsage(topPkg, appLabel, elapsedSec)
 
-        if (topPkg != packageName && blockedPackages.contains(topPkg)) {
+        if (topPkg == packageName) {
+            LockOverlayManager.hideOverlay(this)
+        } else if (blockedPackages.contains(topPkg)) {
             val remaining = getRemainingSeconds(this)
             if (remaining > 0L) {
+                LockOverlayManager.hideOverlay(this)
                 val nextRemaining = (remaining - elapsedSec).coerceAtLeast(0L)
                 val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 prefs.edit().putLong(KEY_REMAINING_SECONDS, nextRemaining).apply()
                 if (nextRemaining <= 0L) {
-                    LockOverlayManager.bringLockScreenToFront(this)
+                    LockOverlayManager.showBlockOverlay(this, appLabel)
                 }
             } else {
-                LockOverlayManager.bringLockScreenToFront(this)
+                LockOverlayManager.showBlockOverlay(this, appLabel)
             }
+        } else {
+            LockOverlayManager.hideOverlay(this)
         }
 
         updateNotificationStatus()
@@ -228,7 +234,11 @@ class UsageMonitorService : Service() {
                 lastResumedPkg = event.packageName
             }
         }
-        if (lastResumedPkg != null) return lastResumedPkg
+        if (lastResumedPkg != null) {
+            lastKnownForegroundPkg = lastResumedPkg
+            return lastResumedPkg
+        }
+        if (lastKnownForegroundPkg != null) return lastKnownForegroundPkg
 
         val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, end - 60_000L, end)
         return stats?.maxByOrNull { it.lastTimeUsed }?.packageName
@@ -302,6 +312,7 @@ class UsageMonitorService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(checkRunnable)
+        LockOverlayManager.hideOverlay(this)
         super.onDestroy()
     }
 
