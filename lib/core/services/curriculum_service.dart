@@ -53,6 +53,19 @@ class CurriculumService {
     _askedPromptsInSession.clear();
   }
 
+  bool _matchesSubjectMode(Question q, String mode) {
+    if (mode == 'random' || mode.isEmpty) return true;
+    final sub = q.subject.toLowerCase();
+    final target = mode.toLowerCase();
+    if (target == 'tự nhiên & xã hội') {
+      return sub.contains('tự nhiên') ||
+          sub.contains('khoa học') ||
+          sub.contains('đạo đức') ||
+          sub.contains('lịch sử');
+    }
+    return sub.contains(target);
+  }
+
   Future<List<Question>> loadQuestionsForChallenge({
     required ChildProfile profile,
     required QuestionDifficulty targetDifficulty,
@@ -60,26 +73,60 @@ class CurriculumService {
   }) async {
     _cachedQuestions ??= await _loadFromAssets();
     final all = _cachedQuestions!;
+    final mode = profile.subjectMode;
 
-    // Lọc câu tĩnh cùng lớp chưa từng hỏi trong ngày.
-    final staticPool = all
+    // Lọc câu tĩnh cùng lớp + đúng chủ đề phụ huynh chọn (chưa hỏi trong ngày).
+    final sameGradeAndTopic = all
         .where((q) =>
-            q.grade == profile.grade && !_askedPromptsInSession.contains(q.prompt))
+            q.grade == profile.grade && _matchesSubjectMode(q, mode))
+        .toList();
+
+    final unseenStatic = sameGradeAndTopic
+        .where((q) => !_askedPromptsInSession.contains(q.prompt))
         .toList()
       ..shuffle(_random);
 
     final result = <Question>[];
     final usedPrompts = <String>{};
 
-    // Lớp 1 ưu tiên lấy đa dạng dạng bài tĩnh (Ghép vần, Kéo thả hình học, Đố vui, Đúng/Sai)
-    final ratio = profile.grade == 1 ? 0.6 : 0.4;
-    final maxStatic = (count * ratio).ceil().clamp(1, staticPool.length);
-    for (final q in staticPool.take(maxStatic)) {
-      result.add(q);
-      usedPrompts.add(q.prompt);
-      _askedPromptsInSession.add(q.prompt);
+    // Nếu phụ huynh chọn 1 chủ đề cụ thể KHÔNG phải Toán (VD: Tiếng Việt, Tiếng Anh, TN&XH, Đố vui),
+    // ưu tiên lấy tối đa các câu của đúng chủ đề đó.
+    final isNonMathSingleTopic =
+        mode != 'random' && mode.toLowerCase() != 'toán';
+
+    if (isNonMathSingleTopic) {
+      for (final q in unseenStatic.take(count)) {
+        result.add(q);
+        usedPrompts.add(q.prompt);
+        _askedPromptsInSession.add(q.prompt);
+      }
+      // Nếu chủ đề đơn lẻ cần nhiều câu hơn kho chưa hỏi, lấy thêm câu khác trong cùng chủ đề (không lặp trong cùng 1 lượt)
+      if (result.length < count) {
+        final fallbackSameTopic = sameGradeAndTopic
+            .where((q) => !usedPrompts.contains(q.prompt))
+            .toList()
+          ..shuffle(_random);
+        for (final q in fallbackSameTopic) {
+          if (result.length >= count) break;
+          result.add(q);
+          usedPrompts.add(q.prompt);
+        }
+      }
+    } else {
+      // Chế độ Ngẫu nhiên nhiều chủ đề HOẶC chỉ môn Toán
+      final ratio = mode.toLowerCase() == 'toán'
+          ? 0.35
+          : (profile.grade == 1 ? 0.6 : 0.4);
+      final maxStatic =
+          (count * ratio).ceil().clamp(0, unseenStatic.length);
+      for (final q in unseenStatic.take(maxStatic)) {
+        result.add(q);
+        usedPrompts.add(q.prompt);
+        _askedPromptsInSession.add(q.prompt);
+      }
     }
 
+    // Bù đủ số câu bằng bộ sinh Toán động (cho chế độ Toán hoặc Random, hoặc khi chủ đề tĩnh ít hơn số câu yêu cầu).
     var guard = 0;
     while (result.length < count && guard < 120) {
       guard++;

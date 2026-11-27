@@ -51,6 +51,9 @@
 - [x] Màn hình Làm bài (`QuizScreen`) hỗ trợ nút lớn cho trẻ nhỏ, gợi ý nhẹ nhàng khi làm sai, không phạt nặng
 - [x] Khung `AudioGuideService` đọc câu hỏi/hướng dẫn cho trẻ Lớp 1–2
 - [x] Cổng Phụ huynh (`ParentGateDialog`) bảo vệ bằng PIN/phép tính và `ParentDashboardScreen`
+- [x] Ghim cố định thanh nút **"Làm bài / Học thêm nhận phút"** dưới đáy màn hình `LockScreen` (luôn nhìn thấy ngay không cần cuộn)
+- [x] Lấy ảnh **App Icon gốc thật** của từng ứng dụng trên Android (`MainActivity.kt` → `drawableToBase64`) để hiển thị trong danh sách ứng dụng đã mở khóa (`LockScreen`, `CelebrationDialog`) và hộp thoại chọn app khóa (`ParentDashboardScreen`)
+- [x] Cho phép phụ huynh chọn **Chế độ chủ đề câu hỏi** (`subjectMode`): **Ngẫu nhiên tất cả chủ đề** hoặc tập trung **1 chủ đề riêng** (*Toán, Tiếng Việt, Tiếng Anh, Tự nhiên & Xã hội, Đố vui*)
 - [x] Hệ thống **Nuôi Cú Mèo 3D tương tác (`OwlHomeScreen` + `OwlPetState`)**: 11 cảm xúc (`idle, happy, love, giggle, sideEye, dizzy, angry, crying, eating, sleeping, encourage`), cảm ứng vuốt/chạm (nựng, massage, cù lét, chọc nhẹ, dỗ nín khóc), 4 chỉ số chăm sóc (Cho ăn, Đánh răng/Rửa mặt bọt bong bóng, Tắt đèn đi ngủ, Chơi đùa), Cấp độ (Lv/XP), và **Cửa hàng Sao** với 8 ngoại trang Anh hùng (**CSGT, CSCĐ, CSHS, Quân đội, Bác sĩ Y tế, Lính Cứu hỏa, Phi hành gia, Siêu anh hùng**), 4 màu lông, 5 phụ kiện, 4 phông nền đồng bộ toàn ứng dụng
 - [x] Đồng bộ 2 chiều đồng hồ đếm ngược thời gian giải trí thật giữa Android Native và `LockScreen`, chế độ **Đang mở khóa** (nền xanh tươi + danh sách app mở khóa 🔓 bấm mở trực tiếp) và **Hộp thoại Chúc mừng 3D pháo hoa (`CelebrationDialog`)** sau khi làm xong bài
 - [x] Chống bấm bừa cho Lớp 1 (tạm khóa 1.5s & làm mờ nút chọn sai khi đọc gợi ý), đọc to cả đề lẫn các lựa chọn đáp án, và **Hàng đợi đồng bộ Offline (`Offline Sync Queue`)** tự đẩy bù lên GitHub khi có mạng lại

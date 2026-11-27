@@ -7,15 +7,21 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
+import android.util.Base64
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -207,10 +213,37 @@ class MainActivity : FlutterActivity() {
             if (pkg == packageName || seen.contains(pkg)) continue
             seen.add(pkg)
             val label = ri.loadLabel(pm)?.toString() ?: pkg
-            apps.add(mapOf("packageName" to pkg, "appName" to label))
+            val iconB64 = try {
+                drawableToBase64(ri.loadIcon(pm))
+            } catch (_: Exception) {
+                ""
+            }
+            apps.add(
+                mapOf(
+                    "packageName" to pkg,
+                    "appName" to label,
+                    "iconBase64" to iconB64
+                )
+            )
         }
         apps.sortBy { it["appName"]?.lowercase() }
         return apps
+    }
+
+    private fun drawableToBase64(drawable: Drawable): String {
+        val size = 96
+        val bitmap = if (drawable is BitmapDrawable && drawable.bitmap != null) {
+            Bitmap.createScaledBitmap(drawable.bitmap, size, size, true)
+        } else {
+            val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bmp)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            bmp
+        }
+        val out = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 85, out)
+        return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
     }
 
     private fun hasUsageStatsPermission(): Boolean {

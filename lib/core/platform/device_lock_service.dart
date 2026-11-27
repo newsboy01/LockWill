@@ -6,10 +6,12 @@ class InstalledAppInfo {
   const InstalledAppInfo({
     required this.packageName,
     required this.appName,
+    this.iconBytes,
   });
 
   final String packageName;
   final String appName;
+  final Uint8List? iconBytes;
 }
 
 /// Giao diện trừu tượng quản lý khóa ứng dụng cấp hệ điều hành.
@@ -220,9 +222,17 @@ class MethodChannelDeviceLockService implements DeviceLockService {
       if (raw != null) {
         return raw.map((item) {
           final map = Map<String, dynamic>.from(item as Map);
+          final b64 = (map['iconBase64'] ?? '').toString();
+          Uint8List? bytes;
+          if (b64.isNotEmpty) {
+            try {
+              bytes = base64Decode(b64);
+            } catch (_) {}
+          }
           return InstalledAppInfo(
             packageName: (map['packageName'] ?? '').toString(),
             appName: (map['appName'] ?? '').toString(),
+            iconBytes: bytes,
           );
         }).toList();
       }

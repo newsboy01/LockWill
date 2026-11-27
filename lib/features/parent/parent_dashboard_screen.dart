@@ -49,6 +49,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   late int _maxMinutes;
   late int _extensionMinutes;
   late int _baseQuestions;
+  late String _subjectMode;
 
   // Tùy chỉnh giọng đọc & âm thanh tiếng Việt
   late double _speechRate;
@@ -83,6 +84,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     _maxMinutes = widget.profile.dailyMaxMinutes;
     _extensionMinutes = widget.profile.extensionMinutes;
     _baseQuestions = widget.profile.baseQuestions;
+    _subjectMode = widget.profile.subjectMode;
     _speechRate = widget.profile.speechRate;
     _speechPitch = widget.profile.speechPitch;
     _voiceName = widget.profile.voiceName;
@@ -197,6 +199,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           return CheckboxListTile(
                             dense: true,
                             value: checked,
+                            secondary: app.iconBytes != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.memory(
+                                      app.iconBytes!,
+                                      width: 34,
+                                      height: 34,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : const Icon(Icons.android_rounded),
                             title: Text(app.appName),
                             subtitle: Text(
                               app.packageName,
@@ -451,6 +464,51 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 setState(() => _textbook = v ?? TextbookSeries.ketNoiTriThuc),
           ),
           const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: const [
+              'random',
+              'Toán',
+              'Tiếng Việt',
+              'Tiếng Anh',
+              'Tự nhiên & Xã hội',
+              'Đố vui',
+            ].contains(_subjectMode)
+                ? _subjectMode
+                : 'random',
+            decoration: const InputDecoration(
+              labelText: 'Chế độ chủ đề câu hỏi',
+              prefixIcon: Icon(Icons.category_rounded),
+              border: OutlineInputBorder(),
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: 'random',
+                child: Text('🎲 Ngẫu nhiên nhiều chủ đề (Tất cả các môn)'),
+              ),
+              DropdownMenuItem(
+                value: 'Toán',
+                child: Text('🔢 Chỉ chủ đề Toán'),
+              ),
+              DropdownMenuItem(
+                value: 'Tiếng Việt',
+                child: Text('📖 Chỉ chủ đề Tiếng Việt'),
+              ),
+              DropdownMenuItem(
+                value: 'Tiếng Anh',
+                child: Text('🇬🇧 Chỉ chủ đề Tiếng Anh'),
+              ),
+              DropdownMenuItem(
+                value: 'Tự nhiên & Xã hội',
+                child: Text('🌿 Chỉ Tự nhiên & Xã hội / Đạo đức'),
+              ),
+              DropdownMenuItem(
+                value: 'Đố vui',
+                child: Text('💡 Chỉ Đố vui & Tư duy'),
+              ),
+            ],
+            onChanged: (v) => setState(() => _subjectMode = v ?? 'random'),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(child: Text('Tuần học hiện tại: Tuần $_week')),
@@ -701,6 +759,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   dailyMaxMinutes: _maxMinutes,
                   extensionMinutes: _extensionMinutes,
                   baseQuestions: _baseQuestions,
+                  subjectMode: _subjectMode,
                   parentPin: cleanPin.isEmpty ? '1234' : cleanPin,
                   speechRate: _speechRate,
                   speechPitch: _speechPitch,

@@ -45,6 +45,7 @@ class ChildProfile {
     this.parentName = 'Phụ huynh',
     this.extensionMinutes = 15,
     this.baseQuestions = 5,
+    this.subjectMode = 'random',
     this.speechRate = 0.45,
     this.speechPitch = 1.08,
     this.voiceName = '',
@@ -74,6 +75,10 @@ class ChildProfile {
   /// Tùy chỉnh thời lượng mỗi lần gia hạn và số câu hỏi cơ bản tương ứng.
   final int extensionMinutes; // 5, 10, 15, 20, 30
   final int baseQuestions; // 3..15
+
+  /// Chế độ chủ đề câu hỏi:
+  /// `random` (Ngẫu nhiên nhiều chủ đề) hoặc tên 1 môn cụ thể (`Toán`, `Tiếng Việt`, `Tiếng Anh`, `Tự nhiên & Xã hội`, `Đố vui`).
+  final String subjectMode;
 
   /// Tùy chỉnh giọng đọc tiếng Việt cho trẻ từ Lớp 1-5.
   final double speechRate; // 0.25 .. 0.75
@@ -106,6 +111,7 @@ class ChildProfile {
     String? parentName,
     int? extensionMinutes,
     int? baseQuestions,
+    String? subjectMode,
     double? speechRate,
     double? speechPitch,
     String? voiceName,
@@ -130,6 +136,7 @@ class ChildProfile {
       parentName: parentName ?? this.parentName,
       extensionMinutes: extensionMinutes ?? this.extensionMinutes,
       baseQuestions: baseQuestions ?? this.baseQuestions,
+      subjectMode: subjectMode ?? this.subjectMode,
       speechRate: speechRate ?? this.speechRate,
       speechPitch: speechPitch ?? this.speechPitch,
       voiceName: voiceName ?? this.voiceName,
@@ -156,6 +163,7 @@ class ChildProfile {
         'parentName': parentName,
         'extensionMinutes': extensionMinutes,
         'baseQuestions': baseQuestions,
+        'subjectMode': subjectMode,
         'speechRate': speechRate,
         'speechPitch': speechPitch,
         'voiceName': voiceName,
@@ -182,6 +190,7 @@ class ChildProfile {
       parentName: (json['parentName'] as String?) ?? 'Phụ huynh',
       extensionMinutes: (json['extensionMinutes'] as int?) ?? 15,
       baseQuestions: (json['baseQuestions'] as int?) ?? 5,
+      subjectMode: (json['subjectMode'] as String?) ?? 'random',
       speechRate: ((json['speechRate'] as num?) ?? 0.45).toDouble(),
       speechPitch: ((json['speechPitch'] as num?) ?? 1.08).toDouble(),
       voiceName: (json['voiceName'] as String?) ?? '',

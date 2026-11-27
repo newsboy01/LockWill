@@ -161,13 +161,24 @@ class _CelebrationDialogState extends State<CelebrationDialog>
                                 Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor:
-                                          meta.$2.withValues(alpha: 0.14),
-                                      child: Text(meta.$1,
-                                          style: const TextStyle(fontSize: 20)),
-                                    ),
+                                    if (app.iconBytes != null)
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.memory(
+                                          app.iconBytes!,
+                                          width: 42,
+                                          height: 42,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    else
+                                      CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor:
+                                            meta.$2.withValues(alpha: 0.14),
+                                        child: Text(meta.$1,
+                                            style: const TextStyle(fontSize: 20)),
+                                      ),
                                     const Positioned(
                                       right: -4,
                                       bottom: -2,

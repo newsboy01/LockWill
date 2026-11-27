@@ -84,28 +84,29 @@ class LockScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                padding: EdgeInsets.all(r.pagePadding),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight - r.pagePadding * 2,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: r.maxContentWidth),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: r.maxContentWidth),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        r.pagePadding,
+                        r.pagePadding,
+                        r.pagePadding,
+                        12,
+                      ),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildTopBar(r),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 14),
                           if (r.useSplitLayout)
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Expanded(child: _buildMascotSection(r)),
-                                const SizedBox(width: 28),
+                                const SizedBox(width: 24),
                                 Expanded(
                                   flex: 2,
                                   child: Column(
@@ -117,8 +118,6 @@ class LockScreen extends StatelessWidget {
                                         const SizedBox(height: 14),
                                         _buildUnlockedAppsGrid(r),
                                       ],
-                                      const SizedBox(height: 20),
-                                      _buildActionButtons(r, capReached),
                                     ],
                                   ),
                                 ),
@@ -126,23 +125,43 @@ class LockScreen extends StatelessWidget {
                             )
                           else ...[
                             _buildMascotSection(r),
-                            SizedBox(height: r.isCompactPhone ? 10 : 16),
+                            SizedBox(height: r.isCompactPhone ? 10 : 14),
                             _buildInfoSection(r, capReached),
                             if (isUnlocked) ...[
                               const SizedBox(height: 14),
                               _buildUnlockedAppsGrid(r),
                             ],
-                            SizedBox(height: r.isCompactPhone ? 16 : 22),
-                            _buildActionButtons(r, capReached),
                           ],
-                          const SizedBox(height: 6),
                         ],
                       ),
                     ),
                   ),
-                ),
-              );
-            },
+                  // Thanh nút hành động cố định dưới đáy — luôn thấy ngay không cần vuốt xuống!
+                  Container(
+                    padding: EdgeInsets.fromLTRB(
+                      r.pagePadding,
+                      10,
+                      r.pagePadding,
+                      r.isCompactPhone ? 10 : 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.88),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 12,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: _buildActionButtons(r, capReached),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -242,6 +261,21 @@ class LockScreen extends StatelessWidget {
               ),
               backgroundColor: Colors.white,
               onPressed: onOpenOwlHome,
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0F2FE),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                '📚 ${profile.subjectMode == 'random' ? 'Ngẫu nhiên các môn' : 'Chủ đề: ${profile.subjectMode}'}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: r.isCompactPhone ? 11 : 12,
+                  color: const Color(0xFF0369A1),
+                ),
+              ),
             ),
           ],
         ),
@@ -411,12 +445,23 @@ class LockScreen extends StatelessWidget {
                     Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: meta.$2.withValues(alpha: 0.14),
-                          child:
-                              Text(meta.$1, style: const TextStyle(fontSize: 20)),
-                        ),
+                        if (app.iconBytes != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              app.iconBytes!,
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        else
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundColor: meta.$2.withValues(alpha: 0.14),
+                            child: Text(meta.$1,
+                                style: const TextStyle(fontSize: 20)),
+                          ),
                         const Positioned(
                           right: -4,
                           bottom: -2,
